@@ -37,4 +37,8 @@ $router->add('GET', '/api/status', function() {
     echo json_encode(['status' => 'online', 'version' => '1.0.0']);
 });
 
+// Movie API Routes
+$router->add('GET', '/api/movies', 'MovieController@index');
+$router->add('GET', '/api/movies/details', 'MovieController@details');
+
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
