@@ -41,4 +41,9 @@ $router->add('GET', '/api/status', function() {
 $router->add('GET', '/api/movies', 'MovieController@index');
 $router->add('GET', '/api/movies/details', 'MovieController@details');
 
+// Booking API Routes
+$router->add('GET', '/api/booking/seats', 'BookingController@seats');
+$router->add('POST', '/api/booking/validate-promo', 'BookingController@validatePromo');
+$router->add('POST', '/api/booking/reserve', 'BookingController@reserve');
+
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
