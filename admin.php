@@ -1,93 +1,53 @@
-<?php
-session_start();
+<?php include 'src/templates/header.php'; ?>
 
-// Hardcoded credentials
-$admin_pass = "cinema123";
-
-if (isset($_POST['login'])) {
-    if ($_POST['password'] === $admin_pass) {
-        $_SESSION['admin'] = true;
-    } else {
-        $error = "Грешна парола!";
-    }
-}
-
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: admin.php");
-    exit();
-}
-?>
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ Панел - Cinema Noir</title>
-    <link rel="stylesheet" href="public/css/style.css">
-</head>
-<body>
-    <?php include 'src/templates/header.php'; ?>
-
-    <div class="container" style="padding: 100px 0;">
-        <?php if (!isset($_SESSION['admin'])): ?>
-            <div style="max-width: 400px; margin: 0 auto; background: var(--card-bg); padding: 40px; border-radius: 12px; border: 1px solid var(--border-color);">
-                <h1 class="mb-20 text-center">Админ Вход</h1>
-                <?php if (isset($error)) echo "<p style='color: var(--accent-color); margin-bottom: 15px;'>$error</p>"; ?>
-                <form method="POST">
-                    <label style="display: block; margin-bottom: 8px; font-size: 14px; color: var(--text-secondary);">Парола за достъп</label>
-                    <input type="password" name="password" required placeholder="Въведете парола...">
-                    <button type="submit" name="login" class="btn btn-primary" style="width: 100%;">Влез в системата</button>
-                </form>
+<main class="container" style="padding-top: 140px; min-height: 80vh; display: flex; align-items: center; justify-content: center;">
+    <?php
+    $isLoggedIn = false;
+    if (!$isLoggedIn):
+    ?>
+    <div style="background: var(--surface); padding: 48px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); width: 100%; max-width: 450px; box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
+        <h2 class="hero-title" style="font-size: 32px; margin-bottom: 8px; text-align: center;">АДМИН ПАНЕЛ</h2>
+        <p style="color: var(--text-secondary); text-align: center; margin-bottom: 40px;">Влезте в своя акаунт</p>
+        
+        <form style="display: flex; flex-direction: column; gap: 24px;">
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">Потребителско име</label>
+                <input type="text" class="search-input" style="width: 100%; background: var(--surface-light);" placeholder="admin">
             </div>
-        <?php else: ?>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-                <h1>Добре дошли, Администратор</h1>
-                <a href="?logout=1" class="btn btn-outline">Изход от системата</a>
+            <div>
+                <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase;">Парола</label>
+                <input type="password" class="search-input" style="width: 100%; background: var(--surface-light);" placeholder="••••••••">
             </div>
-
-            <div class="grid-responsive">
-                <div style="background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <h3 class="mb-20">Продажби</h3>
-                    <p style="font-size: 32px; font-weight: bold; color: var(--accent-color);">504.00 лв.</p>
-                    <p style="color: var(--text-secondary);">Общо за днес</p>
-                </div>
-                <div style="background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <h3 class="mb-20">Билети</h3>
-                    <p style="font-size: 32px; font-weight: bold;">42</p>
-                    <p style="color: var(--text-secondary);">Резервирани места</p>
-                </div>
-                <div style="background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <h3 class="mb-20">Филми</h3>
-                    <p style="font-size: 32px; font-weight: bold;">8</p>
-                    <p style="color: var(--text-secondary);">Активни прожекции</p>
-                </div>
-            </div>
-
-            <div class="mt-40" style="background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color);">
-                <h3 class="mb-20">Управление на прожекции</h3>
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
-                            <th style="padding: 15px 0;">Филм</th>
-                            <th>Зала</th>
-                            <th>Час</th>
-                            <th>Действие</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr style="border-bottom: 1px solid var(--border-color);">
-                            <td style="padding: 15px 0;">The Batman</td>
-                            <td>Зала 1</td>
-                            <td>18:30</td>
-                            <td><a href="#" style="color: var(--accent-color);">Редактирай</a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 12px;">ВХОД</button>
+        </form>
     </div>
+    <?php else: ?>
+    <div style="width: 100%;">
+        <header style="margin-bottom: 48px; display: flex; justify-content: space-between; align-items: center;">
+            <h1 class="hero-title" style="font-size: 40px;">СТАТИСТИКА</h1>
+            <button class="btn btn-outline">ИЗХОД</button>
+        </header>
 
-    <?php include 'src/templates/footer.php'; ?>
-</body>
-</html>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; margin-bottom: 64px;">
+            <div style="background: var(--surface); padding: 32px; border-radius: 20px; border-left: 4px solid var(--primary);">
+                <p style="color: var(--text-muted); font-size: 12px; font-weight: 800; margin-bottom: 8px;">ДНЕВЕН ПРИХОД</p>
+                <h3 style="font-size: 28px;">2,450.00 лв.</h3>
+            </div>
+            <div style="background: var(--surface); padding: 32px; border-radius: 20px; border-left: 4px solid var(--primary);">
+                <p style="color: var(--text-muted); font-size: 12px; font-weight: 800; margin-bottom: 8px;">ПРОДАДЕНИ БИЛЕТИ</p>
+                <h3 style="font-size: 28px;">154</h3>
+            </div>
+            <div style="background: var(--surface); padding: 32px; border-radius: 20px; border-left: 4px solid var(--primary);">
+                <p style="color: var(--text-muted); font-size: 12px; font-weight: 800; margin-bottom: 8px;">АКТИВНИ ФИЛМИ</p>
+                <h3 style="font-size: 28px;">12</h3>
+            </div>
+            <div style="background: var(--surface); padding: 32px; border-radius: 20px; border-left: 4px solid var(--primary);">
+                <p style="color: var(--text-muted); font-size: 12px; font-weight: 800; margin-bottom: 8px;">НОВИ ПОТРЕБИТЕЛИ</p>
+                <h3 style="font-size: 28px;">42</h3>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+</main>
+
+<?php include 'src/templates/footer.php'; ?>

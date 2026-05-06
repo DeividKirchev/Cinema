@@ -1,46 +1,189 @@
-<?php require_once 'config/db.php'; ?>
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cinema Noir - Начало</title>
-    <link rel="stylesheet" href="public/css/style.css">
-</head>
-<body>
-    <?php include 'src/templates/header.php'; ?>
+<?php include 'src/templates/header.php'; ?>
 
-    <main>
-        <section class="hero" style="min-height: 80vh; background: linear-gradient(0deg, var(--bg-color) 0%, rgba(18, 18, 28, 0.4) 50%, rgba(18, 18, 28, 0.8) 100%), url('public/img/hero.jpg') center/cover no-repeat; display: flex; align-items: center; justify-content: center; text-align: center;">
-            <div class="container">
-                <h1 style="font-size: 72px; font-weight: 900; margin-bottom: 24px; letter-spacing: -2px; text-transform: uppercase;">Потопи се в мрака</h1>
-                <p style="font-size: 22px; margin-bottom: 48px; color: var(--text-secondary); max-width: 600px; margin-left: auto; margin-right: auto;">Елитно кино изживяване с най-новите заглавия и безкомпромисен комфорт.</p>
-                <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                    <a href="program.php" class="btn btn-primary">Виж Програмата</a>
-                    <a href="archive.php" class="btn btn-outline">Архив на филми</a>
+<main>
+    <section class="hero">
+        <div class="hero-bg">
+            <img class="hero-img" src="public/assets/images/img_15.jpg" alt="Gladiator II">
+            <div class="hero-overlay"></div>
+        </div>
+        <div class="container">
+            <div class="hero-content">
+                <span class="tagline">В КИНАТА ОТ ТАЗИ СЕДМИЦА</span>
+                <h1 class="hero-title">ГЛАДИАТОР II</h1>
+                <p class="hero-desc">
+                    Епичното продължение на легендарната сага. Години след като става свидетел на смъртта на почитания герой Максимус, Луций е принуден да влезе в Колизеума, за да върне славата на Рим на неговия народ.
+                </p>
+                <div class="hero-btns">
+                    <a href="select-tickets.php" class="btn btn-primary">
+                        <span class="material-symbols-outlined">confirmation_number</span>
+                        КУПИ БИЛЕТ
+                    </a>
+                    <a href="#" class="btn btn-outline">ТРЕЙЛЪР</a>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="movies" style="padding: 80px 0;">
-            <div class="container">
-                <h2 style="margin-bottom: 40px; font-size: 32px;">Сега Прожектираме</h2>
-                <div class="grid-responsive">
-                    <?php foreach($movies as $movie): ?>
-                    <div class="movie-card" style="background: var(--card-bg); border-radius: 8px; overflow: hidden; transition: 0.3s; border: 1px solid var(--border-color);">
-                        <div style="height: 350px; background: #333;"></div> <!-- Placeholder for image -->
-                        <div style="padding: 20px;">
-                            <h3 style="margin-bottom: 5px;"><?php echo $movie['title']; ?></h3>
-                            <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 15px;"><?php echo $movie['genre']; ?></p>
-                            <a href="movie.php?id=<?php echo $movie['id']; ?>" class="btn btn-primary" style="width: 100%; text-align: center;">Купи Билет</a>
+    <section class="section-padding overflow-visible">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">ПРОГРАМА</h2>
+                    <div class="section-line"></div>
+                </div>
+                <div class="tab-group">
+                    <button class="btn tab-item active">ДНЕС</button>
+                    <button class="btn btn-outline tab-item border-none opacity-50">УТРЕ</button>
+                    <button class="btn btn-outline tab-item border-none opacity-50">ВДРУГИДЕН</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel-track no-scrollbar">
+                <a href="program.php" class="movie-card text-on-surface">
+                    <div class="movie-card-img-container">
+                        <img class="movie-card-img" src="public/assets/images/img_15.jpg" alt="Gladiator II">
+                    </div>
+                    <div class="movie-card-info">
+                        <h3 class="movie-card-title">ГЛАДИАТОР II</h3>
+                        <div class="movie-card-times">
+                            <span class="time-pill">14:30</span>
+                            <span class="time-pill">17:15</span>
+                            <span class="time-pill">20:00</span>
+                            <span class="time-pill">22:45</span>
                         </div>
                     </div>
-                    <?php endforeach; ?>
+                </a>
+                <a href="program.php" class="movie-card text-on-surface">
+                    <div class="movie-card-img-container">
+                        <img class="movie-card-img" src="public/assets/images/img_16.jpg" alt="Dune 2">
+                    </div>
+                    <div class="movie-card-info">
+                        <h3 class="movie-card-title">ДЮН: ЧАСТ ВТОРА</h3>
+                        <div class="movie-card-times">
+                            <span class="time-pill">15:00</span>
+                            <span class="time-pill">18:30</span>
+                            <span class="time-pill">21:45</span>
+                        </div>
+                    </div>
+                </a>
+                <a href="program.php" class="movie-card text-on-surface">
+                    <div class="movie-card-img-container">
+                        <img class="movie-card-img" src="public/assets/images/img_17.jpg" alt="The Wild Robot">
+                    </div>
+                    <div class="movie-card-info">
+                        <h3 class="movie-card-title">ДИВИЯТ РОБОТ</h3>
+                        <div class="movie-card-times">
+                            <span class="time-pill">11:00</span>
+                            <span class="time-pill">13:15</span>
+                            <span class="time-pill">16:45</span>
+                        </div>
+                    </div>
+                </a>
+                <a href="program.php" class="movie-card text-on-surface">
+                    <div class="movie-card-img-container">
+                        <img class="movie-card-img" src="public/assets/images/img_18.jpg" alt="Smile 2">
+                    </div>
+                    <div class="movie-card-info">
+                        <h3 class="movie-card-title">УСМИВКА 2</h3>
+                        <div class="movie-card-times">
+                            <span class="time-pill">19:30</span>
+                            <span class="time-pill">22:00</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="carousel-nav-overlay container">
+                <div class="carousel-nav prev">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </div>
+                <div class="carousel-nav next">
+                    <span class="material-symbols-outlined">chevron_right</span>
                 </div>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
-    <?php include 'src/templates/footer.php'; ?>
-</body>
-</html>
+    <section class="container section-padding-bottom">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">НАЙ-ГЛЕДАНИ ФИЛМИ</h2>
+                <div class="section-line"></div>
+            </div>
+            <a href="archive.php" class="text-secondary font-bold flex items-center gap-2">
+                ВИЖ ВСИЧКИ <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+        </div>
+
+        <div class="movie-grid-mini">
+            <a href="program.php" class="movie-card text-on-surface">
+                <div class="movie-card-img-container">
+                    <img class="movie-card-img" src="public/assets/images/img_16.jpg" alt="Dune 2">
+                </div>
+                <div class="movie-card-info">
+                    <h3 class="movie-card-title text-lg">ДЮН: ЧАСТ ВТОРА</h3>
+                    <p class="text-muted text-xs uppercase tracking-widest">Фантастика, Екшън</p>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="experience-section">
+        <div class="container">
+            <div class="experience-card">
+                <div>
+                    <div class="flex items-center gap-3 text-white mb-6">
+                        <span class="material-symbols-outlined text-4xl text-primary-light">theater_comedy</span>
+                        <h2>ПРЕМИУМ КИНО ИЗЖИВЯВАНЕ</h2>
+                    </div>
+                    <p>
+                        Открийте магията на голямото кино с нашите LUXE и VIP зали. Звук от последно поколение и комфорт без компромиси.
+                    </p>
+                </div>
+                <div class="experience-grid">
+                    <div class="exp-item">
+                        <span class="exp-name">4DX</span>
+                        <span class="exp-label">Изживяване</span>
+                    </div>
+                    <div class="exp-item">
+                        <span class="exp-name">IMAX</span>
+                        <span class="exp-label">Визия</span>
+                    </div>
+                    <div class="exp-item">
+                        <span class="exp-name">VIP</span>
+                        <span class="exp-label">Комфорт</span>
+                    </div>
+                    <div class="exp-item">
+                        <span class="exp-name">ATMOS</span>
+                        <span class="exp-label">Звук</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter-section">
+        <div class="container">
+            <div class="newsletter-banner">
+                <img src="public/assets/images/newsletter_bg.png" alt="Cinema" class="newsletter-bg">
+                <div class="newsletter-overlay"></div>
+                <div class="newsletter-content">
+                    <h2>НЕ ПРОПУСКАЙТЕ НИТО ЕДНА ПРЕМИЕРА</h2>
+                    <p>
+                        Абонирайте се за нашия бюлетин и получавайте първи новини за най-новите филми и ексклузивни оферти.
+                    </p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Вашият имейл..." class="newsletter-input">
+                        <button class="btn btn-primary px-12 rounded-xl font-black tracking-widest">АБОНИРАЙ СЕ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script src="public/js/carousel.js"></script>
+
+<?php include 'src/templates/footer.php'; ?>

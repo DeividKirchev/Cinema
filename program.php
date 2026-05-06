@@ -1,34 +1,102 @@
-<?php require_once 'config/db.php'; ?>
-<!DOCTYPE html>
-<html lang="bg">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Програма - Cinema Noir</title>
-    <link rel="stylesheet" href="public/css/style.css">
-</head>
-<body>
-    <?php include 'src/templates/header.php'; ?>
+<?php include 'src/templates/header.php'; ?>
 
-    <div class="container" style="padding: 60px 0;">
-        <h1>Програма за седмицата</h1>
-        <p style="color: var(--text-secondary); margin-bottom: 40px;">Изберете удобен за вас час.</p>
+<main class="container program-main">
+    <header class="program-header">
+        <h1 class="hero-title">ПРОГРАМА</h1>
+        <p class="program-desc">
+            Открийте магията на голямото кино. Изберете филм и час за вашето следващо незабравимо преживяване.
+        </p>
+    </header>
 
-        <?php foreach($movies as $movie): ?>
-        <div class="program-item" style="background: var(--card-bg); padding: 30px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 20px;">
-            <div>
-                <h2 style="color: var(--accent-color); margin-bottom: 8px;"><?php echo $movie['title']; ?></h2>
-                <p style="font-size: 14px; color: var(--text-secondary);"><?php echo $movie['genre']; ?> | 124 мин.</p>
-            </div>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <a href="select-tickets.php" class="btn btn-outline">14:30</a>
-                <a href="select-tickets.php" class="btn btn-outline">17:45</a>
-                <a href="select-tickets.php" class="btn btn-primary">21:00</a>
-            </div>
+    <div class="calendar-wrapper">
+        <button id="cal-prev" class="btn btn-outline btn-circle">
+            <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        
+        <div id="calendar-track" class="calendar-scroll no-scrollbar">
         </div>
-        <?php endforeach; ?>
+
+        <button id="cal-next" class="btn btn-outline btn-circle">
+            <span class="material-symbols-outlined">chevron_right</span>
+        </button>
     </div>
 
-    <?php include 'src/templates/footer.php'; ?>
-</body>
-</html>
+    <div class="movie-list">
+        <div class="movie-list-item">
+            <a href="select-tickets.php" class="movie-list-poster">
+                <img src="public/assets/images/img_15.jpg" alt="Gladiator II">
+            </a>
+            <div class="movie-list-content">
+                <div class="flex items-center gap-3 mb-3">
+                    <h2 class="section-title mb-0">ГЛАДИАТОР II</h2>
+                    <span class="age-badge">16+</span>
+                </div>
+                
+                <div class="movie-meta">
+                    <div class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">schedule</span>
+                        180 мин.
+                    </div>
+                    <div class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">theater_comedy</span>
+                        Драма, Биографичен
+                    </div>
+                    <div class="meta-item">
+                        <span class="material-symbols-outlined meta-icon text-gold">star</span>
+                        8.9
+                    </div>
+                </div>
+
+                <div>
+                    <p class="hall-label">ЗАЛА 1 • IMAX</p>
+                    <div class="movie-card-times">
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">14:30</span></a>
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">18:15</span></a>
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">21:00</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="movie-list-item">
+            <a href="select-tickets.php" class="movie-list-poster">
+                <img src="public/assets/images/img_16.jpg" alt="Dune 2">
+            </a>
+            <div class="movie-list-content">
+                <div class="flex items-center gap-3 mb-3">
+                    <h2 class="section-title mb-0">ДЮН: ЧАСТ ВТОРА</h2>
+                    <span class="age-badge">12+</span>
+                </div>
+                
+                <div class="movie-meta">
+                    <div class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">schedule</span>
+                        166 мин.
+                    </div>
+                    <div class="meta-item">
+                        <span class="material-symbols-outlined meta-icon">rocket_launch</span>
+                        Фантастика, Екшън
+                    </div>
+                    <div class="meta-item">
+                        <span class="material-symbols-outlined meta-icon text-gold">star</span>
+                        9.1
+                    </div>
+                </div>
+
+                <div>
+                    <p class="hall-label">ЗАЛА 3 • LUXE</p>
+                    <div class="movie-card-times">
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">13:00</span></a>
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">16:45</span></a>
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">20:30</span></a>
+                        <a href="select-tickets.php" class="text-none"><span class="time-pill">23:15</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="public/js/calendar.js"></script>
+
+<?php include 'src/templates/footer.php'; ?>
