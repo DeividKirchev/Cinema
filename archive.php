@@ -1,4 +1,31 @@
-<?php include 'src/templates/header.php'; ?>
+<?php
+// Autoloader
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/src/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+require_once __DIR__ . '/config/database.php';
+
+use App\Models\Movie;
+
+$movieModel = new Movie();
+$movies = $movieModel->getAll();
+
+include 'src/templates/header.php'; ?>
+
 
 <main class="container archive-main">
     <!-- Hero Section -->
@@ -47,33 +74,21 @@
 
     <!-- Movie Grid -->
     <div class="movie-grid">
-        <?php 
-        $movies = [
-            ['title' => 'Гладиатор II', 'genre' => 'Екшън', 'year' => '2024', 'rating' => '8.9', 'img' => 'img_15.jpg'],
-            ['title' => 'Дюн: Част втора', 'genre' => 'Sci-Fi', 'year' => '2024', 'rating' => '9.1', 'img' => 'img_2.jpg'],
-            ['title' => 'Опенхаймер', 'genre' => 'Драма', 'year' => '2023', 'rating' => '8.6', 'img' => 'img_3.jpg'],
-            ['title' => 'Барби', 'genre' => 'Комедия', 'year' => '2023', 'rating' => '7.2', 'img' => 'img_4.jpg'],
-            ['title' => 'Интерстелар', 'genre' => 'Sci-Fi', 'year' => '2014', 'rating' => '8.7', 'img' => 'img_5.jpg'],
-            ['title' => 'Батман', 'genre' => 'Екшън', 'year' => '2022', 'rating' => '8.0', 'img' => 'img_6.jpg'],
-            ['title' => 'Генезис', 'genre' => 'Трилър', 'year' => '2010', 'rating' => '8.8', 'img' => 'img_7.jpg'],
-            ['title' => 'Жокера', 'genre' => 'Драма', 'year' => '2019', 'rating' => '8.4', 'img' => 'img_8.jpg'],
-        ];
-
-        foreach($movies as $movie): ?>
-        <a href="movie.php" class="movie-card text-on-surface">
+        <?php foreach($movies as $movie): ?>
+        <a href="movie.php?id=<?php echo $movie['id']; ?>" class="movie-card text-on-surface">
             <div class="movie-card-img-container">
-                <img class="movie-card-img" src="public/assets/images/<?php echo $movie['img']; ?>" alt="<?php echo $movie['title']; ?>">
+                <img class="movie-card-img" src="<?php echo $movie['poster_path']; ?>" alt="<?php echo $movie['title']; ?>">
             </div>
             <div class="movie-card-info">
                 <div class="movie-card-header">
                     <h3 class="movie-card-title"><?php echo $movie['title']; ?></h3>
                     <div class="movie-card-rating">
                         <span class="material-symbols-outlined icon-fill">star</span>
-                        <?php echo $movie['rating']; ?>
+                        8.9
                     </div>
                 </div>
                 <p class="text-muted text-xs uppercase tracking-widest">
-                    <?php echo $movie['genre']; ?> • <?php echo $movie['year']; ?>
+                    <?php echo $movie['genre']; ?> • <?php echo date('Y', strtotime($movie['release_date'])); ?>
                 </p>
             </div>
         </a>

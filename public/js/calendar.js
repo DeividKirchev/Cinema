@@ -15,8 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = new Date();
         date.setDate(today.getDate() + i);
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedDate = urlParams.get('date');
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${y}-${m}-${d}`;
+
         const dateCard = document.createElement('div');
-        dateCard.className = `date-card ${i === 0 ? 'active' : ''}`;
+        dateCard.className = `date-card ${selectedDate === dateStr || (!selectedDate && i === 0) ? 'active' : ''}`;
         
         dateCard.innerHTML = `
             <span class="date-month">${months[date.getMonth()]}</span>
@@ -25,8 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         dateCard.addEventListener('click', () => {
-            document.querySelectorAll('.date-card').forEach(c => c.classList.remove('active'));
-            dateCard.classList.add('active');
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${y}-${m}-${d}`;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('date', dateStr);
+            window.location.search = urlParams.toString();
         });
 
         calendarTrack.appendChild(dateCard);

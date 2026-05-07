@@ -1,13 +1,56 @@
-<?php include 'src/templates/header.php'; ?>
+<?php
+// Autoloader
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/src/';
 
-<main class="container selection-layout">
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+require_once __DIR__ . '/config/database.php';
+
+use App\Models\Showtime;
+
+$showtimeModel = new Showtime();
+
+$showtime_id = isset($_GET['showtime_id']) ? (int)$_GET['showtime_id'] : 1;
+$showtime = $showtimeModel->getById($showtime_id);
+
+if (!$showtime) {
+    header("Location: program.php");
+    exit;
+}
+
+$allSeats = $showtimeModel->getSeatsByHall($showtime['hall_id']);
+$reservedSeatIds = $showtimeModel->getReservedSeats($showtime_id);
+
+// Group seats by row
+$rows = [];
+foreach ($allSeats as $seat) {
+    $rows[$seat['row_num']][] = $seat;
+}
+
+include 'src/templates/header.php'; ?>
+
+
+<main class="container selection-layout pt-32">
     <section class="seats-section">
         <header class="seats-section-header">
-            <h1 class="hero-title text-3xl md:text-6xl">ГЛАДИАТОР II</h1>
+            <h1 class="hero-title text-3xl md:text-6xl"><?php echo mb_strtoupper($showtime['title']); ?></h1>
             <div class="flex gap-6 text-secondary text-sm font-bold uppercase flex-wrap">
-                <span>25 Януари, 2025</span>
-                <span>18:30 ч.</span>
-                <span class="text-primary-container">Зала 1 IMAX</span>
+                <span><?php echo date('d F, Y', strtotime($showtime['start_time'])); ?></span>
+                <span><?php echo date('H:i', strtotime($showtime['start_time'])); ?> ч.</span>
+                <span class="text-primary-container"><?php echo $showtime['hall_name']; ?></span>
             </div>
         </header>
 
@@ -25,28 +68,32 @@
                 </div>
                 <div class="screen-gap"></div>
                 <div class="seat-map" id="seat-map">
-                    <?php for ($r = 1; $r <= 6; $r++): ?>
+                    <?php foreach ($rows as $row_num => $rowSeats): ?>
                         <div class="seat-row">
-                            <span class="row-label"><?php echo $r; ?></span>
-                            <?php for ($s = 1; $s <= 12; $s++): ?>
-                                <?php if ($s == 7) echo '<div class="seat-gap"></div>'; ?>
-                                <div class="seat <?php if ($r == 1 && $s <= 2) echo 'occupied'; ?>" data-row="<?php echo $r; ?>" data-seat="<?php echo $s; ?>"></div>
-                            <?php endfor; ?>
+                            <span class="row-label <?php echo (max(array_column($rowSeats, 'type')) == 'vip') ? 'text-gold' : ''; ?>"><?php echo $row_num; ?></span>
+                            <?php 
+                            $prevSeatNum = 0;
+                            foreach ($rowSeats as $seat): 
+                                // Add gap if needed (simple logic: if jump in seat number)
+                                if ($prevSeatNum > 0 && $seat['seat_num'] - $prevSeatNum > 1) {
+                                    echo '<div class="seat-gap"></div>';
+                                }
+                                $prevSeatNum = $seat['seat_num'];
+                                
+                                $classes = ['seat'];
+                                if ($seat['type'] == 'vip') $classes[] = 'vip';
+                                if (in_array($seat['id'], $reservedSeatIds)) $classes[] = 'occupied';
+                            ?>
+                                <div class="<?php echo implode(' ', $classes); ?>" 
+                                     data-id="<?php echo $seat['id']; ?>"
+                                     data-row="<?php echo $seat['row_num']; ?>" 
+                                     data-seat="<?php echo $seat['seat_num']; ?>"
+                                     data-type="<?php echo $seat['type']; ?>">
+                                    <?php echo ($seat['type'] == 'vip') ? 'VIP' : ''; ?>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endfor; ?>
-
-                    <div class="mb-4 h-5"></div>
-
-                    <div class="seat-row">
-                        <span class="row-label text-gold">7</span>
-                        <div class="seat vip" data-row="7" data-seat="1">VIP</div>
-                        <div class="seat vip" data-row="7" data-seat="2">VIP</div>
-                        <div class="seat vip" data-row="7" data-seat="3">VIP</div>
-                        <div class="seat-gap"></div>
-                        <div class="seat vip" data-row="7" data-seat="4">VIP</div>
-                        <div class="seat vip" data-row="7" data-seat="5">VIP</div>
-                        <div class="seat vip" data-row="7" data-seat="6">VIP</div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
@@ -75,11 +122,11 @@
         <h2 class="panel-title">ДЕТАЙЛИ ЗА РЕЗЕРВАЦИЯ</h2>
 
         <div class="mb-8 rounded-2xl overflow-hidden aspect-video relative">
-            <img src="public/assets/images/img_15.jpg" alt="Scene" class="w-full h-full object-cover">
+            <img src="<?php echo $showtime['poster_path']; ?>" alt="Scene" class="w-full h-full object-cover">
             <div class="absolute inset-0 hero-gradient"></div>
             <div class="absolute bottom-4 left-4">
                 <p class="text-xs text-primary-container font-black mb-1">ФИЛМ</p>
-                <p class="text-lg font-black">ГЛАДИАТОР II</p>
+                <p class="text-lg font-black"><?php echo mb_strtoupper($showtime['title']); ?></p>
             </div>
         </div>
 
@@ -127,10 +174,15 @@
                     <span class="text-sm text-muted font-black ml-1">ЛВ.</span>
                 </div>
             </div>
-            <a href="order.php" class="btn btn-primary w-full py-4 text-lg justify-center gap-3 opacity-50 pointer-events-none" id="btn-order">
-                ПРОДЪЛЖИ
-                <span class="material-symbols-outlined">arrow_forward</span>
-            </a>
+            <form action="order.php" method="POST" id="booking-form">
+                <input type="hidden" name="showtime_id" value="<?php echo $showtime_id; ?>">
+                <input type="hidden" name="selected_seats" id="input-selected-seats">
+                <input type="hidden" name="total_price" id="input-total-price">
+                <button type="submit" class="btn btn-primary w-full py-4 text-lg justify-center gap-3 opacity-50 pointer-events-none" id="btn-order">
+                    ПРОДЪЛЖИ
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </form>
         </div>
     </aside>
 </main>
@@ -184,14 +236,16 @@
 
                 const row = seat.dataset.row;
                 const num = seat.dataset.seat;
+                const id = seat.dataset.id;
+                const type = seat.dataset.type;
 
                 if (seat.classList.contains('selected')) {
                     seat.classList.remove('selected');
-                    selectedSeats = selectedSeats.filter(s => !(s.row === row && s.seat === num));
+                    selectedSeats = selectedSeats.filter(s => s.id !== id);
                 } else {
                     if (selectedSeats.length < totalTickets) {
                         seat.classList.add('selected');
-                        selectedSeats.push({ row, seat: num });
+                        selectedSeats.push({ id, row, seat: num, type });
                     } else {
                         alert(`Можете да изберете максимум ${totalTickets} места.`);
                     }
@@ -211,6 +265,10 @@
                 item.innerHTML = `<p class="selected-seat-text">РЕД ${s.row}, МЯСТО ${s.seat}</p>`;
                 list.appendChild(item);
             });
+
+            // Update hidden inputs for form submission
+            document.getElementById('input-selected-seats').value = JSON.stringify(selectedSeats);
+            document.getElementById('input-total-price').value = totalPrice.toFixed(2);
 
             if (totalTickets > 0 && selectedSeats.length === totalTickets) {
                 btnOrder.classList.remove('opacity-50', 'pointer-events-none');

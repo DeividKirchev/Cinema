@@ -1,10 +1,46 @@
-<?php include 'src/templates/header.php'; ?>
+<?php
+// Autoloader
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/src/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+require_once __DIR__ . '/config/database.php';
+
+use App\Models\Movie;
+
+$movieModel = new Movie();
+
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 1;
+$movie = $movieModel->getById($id);
+
+if (!$movie) {
+    header("Location: index.php");
+    exit;
+}
+
+$cast = json_decode($movie['cast'], true) ?: [];
+
+include 'src/templates/header.php'; ?>
+
 
 <main class="relative pb-32">
     <!-- Hero Section -->
     <section class="movie-hero">
         <div class="absolute inset-0 z-0">
-            <img class="w-full h-full object-cover" alt="Гладиатор II" src="public/assets/images/img_23.jpg" />
+            <img class="w-full h-full object-cover" alt="<?php echo $movie['title']; ?>" src="<?php echo $movie['poster_path']; ?>" />
             <div class="absolute inset-0 hero-gradient"></div>
             <div class="absolute inset-0 hero-overlay-side opacity-80">
             </div>
@@ -13,29 +49,31 @@
             <div class="max-w-4xl space-y-6">
                 <div class="flex items-center gap-4 animate-fade-in">
                     <span
-                        class="px-3 py-1 bg-primary-container text-on-primary-container font-bold text-xs rounded uppercase tracking-widest">Премиера</span>
+                        class="px-3 py-1 bg-primary-container text-on-primary-container font-bold text-xs rounded uppercase tracking-widest"><?php echo ($movie['status'] == 'now playing') ? 'В кината' : 'Очаквайте'; ?></span>
                     <div class="flex items-center gap-1 text-secondary">
                         <span class="material-symbols-outlined text-sm icon-fill">star</span>
                         <span class="font-bold text-lg">8.0</span>
                         <span class="text-slate-400 text-xs ml-1 font-medium">IMDb</span>
                     </div>
-                    <span class="text-slate-300 text-sm font-medium border-l border-white/20 pl-4">150 мин</span>
+                    <span class="text-slate-300 text-sm font-medium border-l border-white/20 pl-4"><?php echo $movie['duration']; ?> мин</span>
                 </div>
                 <h1
                     class="text-4xl md:text-8xl font-black font-headline tracking-tighter text-on-surface uppercase text-shadow-cinematic leading-none">
-                    Гладиатор II
+                    <?php echo $movie['title']; ?>
                 </h1>
                 <div class="flex flex-wrap gap-4 pt-4">
-                    <button
+                    <a href="program.php?movie_id=<?php echo $movie['id']; ?>"
                         class="w-full md:w-auto px-10 py-4 cta-gradient text-on-primary-container font-bold rounded-xl text-lg flex items-center justify-center gap-3 transition-transform hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(229,9,20,0.3)]">
                         Резервирай билет
                         <span class="material-symbols-outlined">confirmation_number</span>
-                    </button>
-                    <button
+                    </a>
+                    <?php if (!empty($movie['trailer_url'])): ?>
+                    <a href="<?php echo $movie['trailer_url']; ?>" target="_blank"
                         class="w-full md:w-auto px-10 py-4 bg-surface-variant/20 backdrop-blur-md border border-white/10 text-white font-bold rounded-xl text-lg hover:bg-surface-variant/40 transition-all flex items-center justify-center gap-3">
                         Трейлър
                         <span class="material-symbols-outlined">play_circle</span>
-                    </button>
+                    </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -50,10 +88,7 @@
                 <div class="p-8 rounded-3xl bg-surface-container-low/40 backdrop-blur-xl">
                     <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-red-500 mb-6">Синопсис</h3>
                     <p class="text-xl leading-relaxed text-slate-300 line-clamp-3 transition-all duration-500" id="synopsis-text">
-                        Години след като е станал свидетел на смъртта на почитания герой Максимус от ръцете на чичо си,
-                        Луций е принуден да влезе в Колизеума, след като домът му е покорен от тираничните императори,
-                        които сега управляват Рим с железен юмрук. С гняв в сърцето и бъдещето на Империята на карта,
-                        Луций трябва да погледне към миналото си, за да намери сила и чест.
+                        <?php echo $movie['description']; ?>
                     </p>
                     <button id="synopsis-toggle" class="btn-text mt-4 flex items-center gap-2 text-red-500 font-bold text-sm uppercase tracking-wider hover:text-red-400 transition-colors">
                         <span>Виж още</span>
@@ -66,33 +101,21 @@
                     <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-red-500 mb-8">Актьорски
                         състав</h3>
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <?php foreach ($cast as $actor): ?>
                         <div
                             class="group relative overflow-hidden rounded-2xl bg-surface-container aspect-square transition-all">
                             <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-                                alt="Пол Мескал" src="public/assets/images/img_24.jpg" />
+                                alt="<?php echo $actor['name']; ?>" src="<?php echo $actor['image']; ?>" />
                             <div class="actor-overlay">
-                                <p class="font-bold text-white">Пол Мескал</p>
-                                <p class="text-xs text-slate-400">Луций</p>
+                                <p class="font-bold text-white"><?php echo $actor['name']; ?></p>
+                                <p class="text-xs text-slate-400"><?php echo $actor['character']; ?></p>
                             </div>
                         </div>
-                        <div
-                            class="group relative overflow-hidden rounded-2xl bg-surface-container aspect-square transition-all">
-                            <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-                                alt="Педро Паскал" src="public/assets/images/img_25.jpg" />
-                            <div class="actor-overlay">
-                                <p class="font-bold text-white">Педро Паскал</p>
-                                <p class="text-xs text-slate-400">Марк Акаций</p>
-                            </div>
-                        </div>
-                        <div
-                            class="group relative overflow-hidden rounded-2xl bg-surface-container aspect-square transition-all">
-                            <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-                                alt="Дензъл Уошингтън" src="public/assets/images/img_26.jpg" />
-                            <div class="actor-overlay">
-                                <p class="font-bold text-white">Дензъл Уошингтън</p>
-                                <p class="text-xs text-slate-400">Макрин</p>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
+                        
+                        <?php if (empty($cast)): ?>
+                            <p class="text-slate-500 italic">Няма информация за актьорския състав.</p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -102,17 +125,16 @@
                 <div class="p-8 rounded-3xl bg-surface-container-high space-y-8">
                     <div>
                         <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Режисьор</h4>
-                        <p class="text-lg font-bold text-white">Ридли Скот</p>
+                        <p class="text-lg font-bold text-white"><?php echo $movie['director']; ?></p>
                     </div>
                     <div>
                         <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Жанр</h4>
                         <div class="flex flex-wrap gap-2">
-                            <span
-                                class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">Екшън</span>
-                            <span
-                                class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">Драма</span>
-                            <span
-                                class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300">Приключенски</span>
+                            <?php 
+                            $genres = explode(',', $movie['genre']);
+                            foreach ($genres as $g): ?>
+                                <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-slate-300"><?php echo trim($g); ?></span>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                     <div>

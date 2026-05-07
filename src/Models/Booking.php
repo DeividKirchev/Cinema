@@ -59,13 +59,17 @@ class Booking {
         try {
             $this->db->beginTransaction();
 
+            $resUid = bin2hex(random_bytes(4)); // Short readable UID
+
             // 1. Create the reservation
             $stmt = $this->db->prepare("
-                INSERT INTO reservations (showtime_id, customer_email, total_price, promo_code_id, payment_method, status)
-                VALUES (:showtime_id, :customer_email, :total_price, :promo_code_id, :payment_method, 'confirmed')
+                INSERT INTO reservations (uid, showtime_id, customer_name, customer_email, total_price, promo_code_id, payment_method, status)
+                VALUES (:uid, :showtime_id, :customer_name, :customer_email, :total_price, :promo_code_id, :payment_method, 'confirmed')
             ");
             $stmt->execute([
+                'uid' => $resUid,
                 'showtime_id' => $data['showtime_id'],
+                'customer_name' => $data['customer_name'] ?? 'Guest',
                 'customer_email' => $data['customer_email'],
                 'total_price' => $data['total_price'],
                 'promo_code_id' => $data['promo_code_id'] ?? null,
@@ -75,8 +79,8 @@ class Booking {
 
             // 2. Insert reserved seats
             $stmt = $this->db->prepare("
-                INSERT INTO reserved_seats (reservation_id, seat_id, ticket_type, price)
-                VALUES (:reservation_id, :seat_id, :ticket_type, :price)
+                INSERT INTO reserved_seats (uid, reservation_id, seat_id, ticket_type, price)
+                VALUES (:uid, :reservation_id, :seat_id, :ticket_type, :price)
             ");
 
             foreach ($data['seats'] as $seat) {
@@ -96,9 +100,10 @@ class Booking {
                 }
 
                 $stmt->execute([
+                    'uid' => bin2hex(random_bytes(8)),
                     'reservation_id' => $reservationId,
                     'seat_id' => $seat['id'],
-                    'ticket_type' => $seat['type'],
+                    'ticket_type' => $seat['type'] ?? 'standard',
                     'price' => $seat['price']
                 ]);
             }

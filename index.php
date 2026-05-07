@@ -1,24 +1,98 @@
-<?php include 'src/templates/header.php'; ?>
+<?php
+// Autoloader
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/src/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+require_once __DIR__ . '/config/database.php';
+
+use App\Models\Movie;
+use App\Models\Showtime;
+
+$movieModel = new Movie();
+$showtimeModel = new Showtime();
+
+// Fetch featured movie
+$featuredMovie = $movieModel->getFeatured();
+
+// Fallback if no featured movie
+if (!$featuredMovie) {
+    $allMovies = $movieModel->getAll(['status' => 'now playing']);
+    if (!empty($allMovies)) {
+        $featuredMovie = $allMovies[0];
+    } else {
+        $featuredMovie = [
+            'id' => 0,
+            'title' => 'Няма активни филми',
+            'description' => 'В момента няма филми в програмата.',
+            'poster_path' => 'public/assets/images/default_poster.jpg',
+            'trailer_url' => ''
+        ];
+    }
+}
+
+// Fetch today's movies and their showtimes
+$dateParam = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+$todayShowtimes = $showtimeModel->getByDate($dateParam);
+
+// Group showtimes by movie
+$moviesToday = [];
+foreach ($todayShowtimes as $st) {
+    $mid = $st['movie_id'];
+    if (!isset($moviesToday[$mid])) {
+        $moviesToday[$mid] = [
+            'id' => $mid,
+            'title' => $st['title'],
+            'poster_path' => $st['poster_path'],
+            'showtimes' => []
+        ];
+    }
+    $moviesToday[$mid]['showtimes'][] = [
+        'id' => $st['id'],
+        'time' => date('H:i', strtotime($st['start_time']))
+    ];
+}
+
+// Fetch trending movies
+$trendingMovies = $movieModel->getTrending(6);
+
+include 'src/templates/header.php'; ?>
+
 
 <main>
     <section class="hero">
         <div class="hero-bg">
-            <img class="hero-img" src="public/assets/images/img_15.jpg" alt="Gladiator II">
+            <img class="hero-img" src="<?php echo $featuredMovie['poster_path']; ?>" alt="<?php echo $featuredMovie['title']; ?>">
             <div class="hero-overlay"></div>
         </div>
         <div class="container">
             <div class="hero-content">
                 <span class="tagline">В КИНАТА ОТ ТАЗИ СЕДМИЦА</span>
-                <h1 class="hero-title">ГЛАДИАТОР II</h1>
+                <h1 class="hero-title"><?php echo mb_strtoupper($featuredMovie['title']); ?></h1>
                 <p class="hero-desc">
-                    Епичното продължение на легендарната сага. Години след като става свидетел на смъртта на почитания герой Максимус, Луций е принуден да влезе в Колизеума, за да върне славата на Рим на неговия народ.
+                    <?php echo $featuredMovie['description']; ?>
                 </p>
                 <div class="hero-btns">
-                    <a href="select-tickets.php" class="btn btn-primary">
+                    <a href="program.php?movie_id=<?php echo $featuredMovie['id']; ?>" class="btn btn-primary">
                         <span class="material-symbols-outlined">confirmation_number</span>
                         КУПИ БИЛЕТ
                     </a>
-                    <a href="#" class="btn btn-outline">ТРЕЙЛЪР</a>
+                    <?php if (!empty($featuredMovie['trailer_url'])): ?>
+                        <a href="<?php echo $featuredMovie['trailer_url']; ?>" target="_blank" class="btn btn-outline">ТРЕЙЛЪР</a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -32,67 +106,36 @@
                     <div class="section-line"></div>
                 </div>
                 <div class="tab-group">
-                    <button class="btn tab-item active">ДНЕС</button>
-                    <button class="btn btn-outline tab-item border-none opacity-50">УТРЕ</button>
-                    <button class="btn btn-outline tab-item border-none opacity-50">ВДРУГИДЕН</button>
+                    <a href="index.php?date=<?php echo date('Y-m-d'); ?>" class="btn tab-item <?php echo $dateParam === date('Y-m-d') ? 'active' : 'btn-outline border-none opacity-50'; ?>">ДНЕС</a>
+                    <a href="index.php?date=<?php echo date('Y-m-d', strtotime('+1 day')); ?>" class="btn tab-item <?php echo $dateParam === date('Y-m-d', strtotime('+1 day')) ? 'active' : 'btn-outline border-none opacity-50'; ?>">УТРЕ</a>
+                    <a href="index.php?date=<?php echo date('Y-m-d', strtotime('+2 days')); ?>" class="btn tab-item <?php echo $dateParam === date('Y-m-d', strtotime('+2 days')) ? 'active' : 'btn-outline border-none opacity-50'; ?>">ВДРУГИДЕН</a>
                 </div>
             </div>
         </div>
 
         <div class="carousel-container">
             <div class="carousel-track no-scrollbar">
-                <a href="program.php" class="movie-card text-on-surface">
-                    <div class="movie-card-img-container">
-                        <img class="movie-card-img" src="public/assets/images/img_15.jpg" alt="Gladiator II">
-                    </div>
+                <?php foreach ($moviesToday as $m): ?>
+                <div class="movie-card text-on-surface">
+                    <a href="movie.php?id=<?php echo $m['id']; ?>" class="movie-card-img-container">
+                        <img class="movie-card-img" src="<?php echo $m['poster_path']; ?>" alt="<?php echo $m['title']; ?>">
+                    </a>
                     <div class="movie-card-info">
-                        <h3 class="movie-card-title">ГЛАДИАТОР II</h3>
+                        <a href="movie.php?id=<?php echo $m['id']; ?>">
+                            <h3 class="movie-card-title"><?php echo mb_strtoupper($m['title']); ?></h3>
+                        </a>
                         <div class="movie-card-times">
-                            <span class="time-pill">14:30</span>
-                            <span class="time-pill">17:15</span>
-                            <span class="time-pill">20:00</span>
-                            <span class="time-pill">22:45</span>
+                            <?php foreach ($m['showtimes'] as $st): ?>
+                                <a href="select-tickets.php?showtime_id=<?php echo $st['id']; ?>" class="time-pill"><?php echo $st['time']; ?></a>
+                            <?php endforeach; ?>
                         </div>
                     </div>
-                </a>
-                <a href="program.php" class="movie-card text-on-surface">
-                    <div class="movie-card-img-container">
-                        <img class="movie-card-img" src="public/assets/images/img_16.jpg" alt="Dune 2">
-                    </div>
-                    <div class="movie-card-info">
-                        <h3 class="movie-card-title">ДЮН: ЧАСТ ВТОРА</h3>
-                        <div class="movie-card-times">
-                            <span class="time-pill">15:00</span>
-                            <span class="time-pill">18:30</span>
-                            <span class="time-pill">21:45</span>
-                        </div>
-                    </div>
-                </a>
-                <a href="program.php" class="movie-card text-on-surface">
-                    <div class="movie-card-img-container">
-                        <img class="movie-card-img" src="public/assets/images/img_17.jpg" alt="The Wild Robot">
-                    </div>
-                    <div class="movie-card-info">
-                        <h3 class="movie-card-title">ДИВИЯТ РОБОТ</h3>
-                        <div class="movie-card-times">
-                            <span class="time-pill">11:00</span>
-                            <span class="time-pill">13:15</span>
-                            <span class="time-pill">16:45</span>
-                        </div>
-                    </div>
-                </a>
-                <a href="program.php" class="movie-card text-on-surface">
-                    <div class="movie-card-img-container">
-                        <img class="movie-card-img" src="public/assets/images/img_18.jpg" alt="Smile 2">
-                    </div>
-                    <div class="movie-card-info">
-                        <h3 class="movie-card-title">УСМИВКА 2</h3>
-                        <div class="movie-card-times">
-                            <span class="time-pill">19:30</span>
-                            <span class="time-pill">22:00</span>
-                        </div>
-                    </div>
-                </a>
+                </div>
+                <?php endforeach; ?>
+                
+                <?php if (empty($moviesToday)): ?>
+                    <p class="text-center w-full py-10 opacity-50">Няма прожекции за днес.</p>
+                <?php endif; ?>
             </div>
             
             <div class="carousel-nav-overlay container">
@@ -106,8 +149,8 @@
         </div>
     </section>
 
-    <section class="container section-padding-bottom">
-        <div class="section-header">
+    <section class="section-padding-bottom">
+        <div class="section-header container">
             <div>
                 <h2 class="section-title">НАЙ-ГЛЕДАНИ ФИЛМИ</h2>
                 <div class="section-line"></div>
@@ -117,16 +160,30 @@
             </a>
         </div>
 
-        <div class="movie-grid-mini">
-            <a href="program.php" class="movie-card text-on-surface">
-                <div class="movie-card-img-container">
-                    <img class="movie-card-img" src="public/assets/images/img_16.jpg" alt="Dune 2">
+        <div class="carousel-container">
+            <div class="carousel-track no-scrollbar">
+                <?php foreach ($trendingMovies as $tm): ?>
+                <div class="movie-card text-on-surface">
+                    <a href="movie.php?id=<?php echo $tm['id']; ?>" class="movie-card-img-container">
+                        <img class="movie-card-img" src="<?php echo $tm['poster_path']; ?>" alt="<?php echo $tm['title']; ?>">
+                    </a>
+                    <div class="movie-card-info">
+                        <a href="movie.php?id=<?php echo $tm['id']; ?>">
+                            <h3 class="movie-card-title text-lg"><?php echo mb_strtoupper($tm['title']); ?></h3>
+                        </a>
+                        <p class="text-muted text-xs uppercase tracking-widest"><?php echo $tm['genre']; ?></p>
+                    </div>
                 </div>
-                <div class="movie-card-info">
-                    <h3 class="movie-card-title text-lg">ДЮН: ЧАСТ ВТОРА</h3>
-                    <p class="text-muted text-xs uppercase tracking-widest">Фантастика, Екшън</p>
+                <?php endforeach; ?>
+            </div>
+            <div class="carousel-nav-overlay container">
+                <div class="carousel-nav prev">
+                    <span class="material-symbols-outlined">chevron_left</span>
                 </div>
-            </a>
+                <div class="carousel-nav next">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </div>
+            </div>
         </div>
     </section>
 

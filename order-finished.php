@@ -1,64 +1,99 @@
-<?php include 'src/templates/header.php'; ?>
+<?php
+// Autoloader
+spl_autoload_register(function ($class) {
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/src/';
 
-<main class="container order-finished-main pb-20">
-    <div class="text-center mb-6">
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+require_once __DIR__ . '/config/database.php';
+
+use App\Models\Showtime;
+
+$showtimeModel = new Showtime();
+
+$reservation_id = isset($_GET['reservation_id']) ? (int)$_GET['reservation_id'] : 0;
+$tickets = $showtimeModel->getTicketsByReservation($reservation_id);
+
+if (empty($tickets)) {
+    header("Location: index.php");
+    exit;
+}
+
+$firstTicket = $tickets[0];
+
+include 'src/templates/header.php'; ?>
+
+<main class="container order-finished-main pb-20 pt-32">
+    <div class="text-center mb-6 no-print">
         <div class="success-icon-wrapper">
             <span class="material-symbols-outlined">check</span>
         </div>
         <h1 class="text-4xl font-black text-on-surface uppercase tracking-widest mb-2">УСПЕШНА РЕЗЕРВАЦИЯ!</h1>
-        <p class="text-muted text-sm">Вашите билети са изпратени на email адрес:</p>
+        <p class="text-muted text-sm">Вашите билети са изпратени на email адрес: <span class="text-white font-bold"><?php echo $firstTicket['customer_email']; ?></span></p>
     </div>
 
-    <div class="selection-layout grid lg:grid-cols-12 gap-10 items-start pt-5">
+    <div class="selection-layout grid lg:grid-cols-12 gap-10 items-start pt-5 no-print">
         <div class="lg:col-span-7 ticket-finished-card">
             <div class="ticket-image-header relative h-[360px] overflow-hidden">
-                <img src="public/assets/images/img_15.jpg" alt="Gladiator II" class="absolute inset-0 w-full h-full object-cover">
+                <img src="<?php echo $firstTicket['poster_path']; ?>" alt="Movie" class="absolute inset-0 w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-[#1B1B25] to-transparent"></div>
                 <div class="ticket-header-info">
                     <span class="imax-badge mb-2">IMAX EXPERIENCE</span>
-                    <h2 class="text-3xl font-black text-white">ГЛАДИАТОР II</h2>
+                    <h2 class="text-3xl font-black text-white"><?php echo mb_strtoupper($firstTicket['movie_title']); ?></h2>
                 </div>
             </div>
             <div class="ticket-meta-grid">
                 <div>
                     <p class="text-[9px] text-muted font-extrabold uppercase mb-1">КОД ЗА РЕЗЕРВАЦИЯ</p>
-                    <p class="text-lg font-extrabold text-on-surface">R-78291A</p>
+                    <p class="text-lg font-extrabold text-on-surface"><?php echo strtoupper($firstTicket['reservation_uid']); ?></p>
                 </div>
                 <div>
                     <p class="text-[9px] text-muted font-extrabold uppercase mb-1">ЗАЛА</p>
-                    <p class="text-lg font-extrabold text-on-surface">ЗАЛА 1 IMAX</p>
+                    <p class="text-lg font-extrabold text-on-surface"><?php echo mb_strtoupper($firstTicket['hall_name']); ?></p>
                 </div>
                 <div>
                     <p class="text-[9px] text-muted font-extrabold uppercase mb-1">ДАТА И ЧАС</p>
-                    <p class="text-base font-extrabold text-on-surface">25 Януари, 2025 | 18:30 ч.</p>
+                    <p class="text-base font-extrabold text-on-surface"><?php echo date('d F, Y | H:i', strtotime($firstTicket['start_time'])); ?> ч.</p>
                 </div>
                 <div>
                     <p class="text-[9px] text-muted font-extrabold uppercase mb-1">МЕСТА</p>
-                    <p class="text-sm font-extrabold text-on-surface">Ред 2, Място 5<br>Ред 2, Място 6</p>
+                    <p class="text-sm font-extrabold text-on-surface">
+                        <?php foreach ($tickets as $t): ?>
+                            Ред <?php echo $t['row_num']; ?>, Място <?php echo $t['seat_num']; ?><br>
+                        <?php endforeach; ?>
+                    </p>
                 </div>
             </div>
-            <div class="px-8 pb-8 flex gap-3">
+            <div class="px-8 pb-8 flex gap-3 no-print">
                 <button class="btn btn-primary flex-1 h-[52px] text-xs justify-center" onclick="window.print()">
                     <span class="material-symbols-outlined text-lg">download</span>
-                    ИЗТЕГЛИ БИЛЕТ
-                </button>
-                <button class="btn btn-outline flex-1 h-[52px] text-xs justify-center bg-white/5">
-                    <span class="material-symbols-outlined text-lg">mail</span>
-                    ИЗПРАТИ
+                    ИЗТЕГЛИ ВСИЧКИ БИЛЕТИ
                 </button>
             </div>
         </div>
 
-        <div class="lg:col-span-5 flex flex-col gap-6">
+        <div class="lg:col-span-5 flex flex-col gap-6 no-print">
             <div class="qr-panel">
-                <p id="ticket-count-label" class="text-[9px] text-muted font-extrabold uppercase mb-6">СКАНИРАЙТЕ НА ВХОДА (БИЛЕТ 1 ОТ 2)</p>
+                <p id="ticket-count-label" class="text-[9px] text-muted font-extrabold uppercase mb-6">СКАНИРАЙТЕ НА ВХОДА (БИЛЕТ 1 ОТ <?php echo count($tickets); ?>)</p>
 
                 <div class="relative mb-8 flex items-center justify-center gap-3">
                     <button id="qr-prev" class="bg-white/5 border-none w-9 h-9 rounded-xl text-white cursor-pointer flex items-center justify-center hover:bg-white/10 transition-colors">
                         <span class="material-symbols-outlined">chevron_left</span>
                     </button>
                     <div class="qr-image-wrapper">
-                        <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=CN-78291A-1" alt="QR" class="w-full h-full">
+                        <img id="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=<?php echo $firstTicket['uid']; ?>" alt="QR" class="w-full h-full">
                     </div>
                     <button id="qr-next" class="bg-white/5 border-none w-9 h-9 rounded-xl text-white cursor-pointer flex items-center justify-center hover:bg-white/10 transition-colors">
                         <span class="material-symbols-outlined">chevron_right</span>
@@ -66,14 +101,15 @@
                 </div>
 
                 <div id="qr-dots" class="qr-dots-group">
-                    <div class="qr-dot active"></div>
-                    <div class="qr-dot"></div>
+                    <?php foreach ($tickets as $i => $t): ?>
+                        <div class="qr-dot <?php echo $i === 0 ? 'active' : ''; ?>"></div>
+                    <?php endforeach; ?>
                 </div>
 
                 <div class="bg-white/[0.02] rounded-xl p-4 flex justify-between items-center">
                     <div class="text-left">
                         <p class="text-[8px] text-muted font-extrabold uppercase mb-0.5">БИЛЕТ</p>
-                        <p id="seat-label" class="text-sm font-extrabold text-white">Ред 2, Място 5</p>
+                        <p id="seat-label" class="text-sm font-extrabold text-white">Ред <?php echo $firstTicket['row_num']; ?>, Място <?php echo $firstTicket['seat_num']; ?></p>
                     </div>
                     <span class="material-symbols-outlined text-primary">confirmation_number</span>
                 </div>
@@ -85,14 +121,61 @@
             </div>
         </div>
     </div>
+
+    <!-- Printable area for all tickets -->
+    <div class="print-only">
+        <?php foreach ($tickets as $t): ?>
+            <div class="print-ticket">
+                <h1 style="margin: 0 0 20px 0;">CINEMA NOIR - БИЛЕТ</h1>
+                <div style="display: flex; gap: 40px;">
+                    <div style="flex: 1;">
+                        <h2 style="margin: 0 0 10px 0;"><?php echo mb_strtoupper($t['movie_title']); ?></h2>
+                        <p><strong>ЗАЛА:</strong> <?php echo mb_strtoupper($t['hall_name']); ?></p>
+                        <p><strong>ДАТА:</strong> <?php echo date('d.m.Y H:i', strtotime($t['start_time'])); ?></p>
+                        <p><strong>МЯСТО:</strong> РЕД <?php echo $t['row_num']; ?>, МЯСТО <?php echo $t['seat_num']; ?></p>
+                        <p><strong>КОД:</strong> <?php echo strtoupper($t['reservation_uid']); ?></p>
+                    </div>
+                    <div style="width: 150px; height: 150px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<?php echo $t['uid']; ?>" alt="QR" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
 </main>
+
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { background: white !important; color: black !important; }
+        .navbar, .header, .footer { display: none !important; }
+        
+        .print-ticket {
+            break-before: page;
+            padding: 60px;
+            border: 1px solid #eee;
+            margin-bottom: 20px;
+            color: #000;
+            background: #fff;
+            min-height: 100vh;
+        }
+
+        .print-ticket:first-child {
+            break-before: auto;
+        }
+    }
+    .print-only { display: none; }
+</style>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const qrData = [
-            { seat: 'Ред 2, Място 5', code: 'CN-78291A-1' },
-            { seat: 'Ред 2, Място 6', code: 'CN-78291A-2' }
-        ];
+        const qrData = <?php echo json_encode(array_map(function($t) {
+            return [
+                'seat' => "Ред {$t['row_num']}, Място {$t['seat_num']}",
+                'code' => $t['uid']
+            ];
+        }, $tickets)); ?>;
         let currentIndex = 0;
 
         const qrImage = document.getElementById('qr-image');
@@ -125,6 +208,5 @@
         });
     });
 </script>
-
 
 <?php include 'src/templates/footer.php'; ?>
