@@ -21,6 +21,7 @@
                 <a class="nav-link" href="index.php">Начало</a>
                 <a class="nav-link" href="archive.php">Филми</a>
                 <a class="nav-link" href="program.php">Програма</a>
+                <a class="nav-link" href="faq.php">FAQ</a>
             </div>
             
             <div class="nav-actions">
@@ -39,6 +40,7 @@
         <a class="nav-link text-xl font-black text-white" href="index.php">Начало</a>
         <a class="nav-link text-xl font-black text-white" href="archive.php">Филми</a>
         <a class="nav-link text-xl font-black text-white" href="program.php">Програма</a>
+        <a class="nav-link text-xl font-black text-white" href="faq.php">FAQ</a>
     </div>
 
     <script>
