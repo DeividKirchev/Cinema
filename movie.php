@@ -31,7 +31,10 @@ if (!$movie) {
     exit;
 }
 
-$cast = json_decode($movie['cast'], true) ?: [];
+$cast = $movieModel->getActors($id);
+foreach ($cast as $key => $actor) {
+    $cast[$key]['image'] = $actor['image_url'];
+}
 
 include 'src/templates/header.php'; ?>
 
@@ -52,7 +55,7 @@ include 'src/templates/header.php'; ?>
                         class="px-3 py-1 bg-primary-container text-on-primary-container font-bold text-xs rounded uppercase tracking-widest"><?php echo ($movie['status'] == 'now playing') ? 'В кината' : 'Очаквайте'; ?></span>
                     <div class="flex items-center gap-1 text-secondary">
                         <span class="material-symbols-outlined text-sm icon-fill">star</span>
-                        <span class="font-bold text-lg">8.0</span>
+                        <span class="font-bold text-lg"><?php echo number_format($movie['user_rating'] ?? 8.5, 1); ?></span>
                         <span class="text-slate-400 text-xs ml-1 font-medium">IMDb</span>
                     </div>
                     <span class="text-slate-300 text-sm font-medium border-l border-white/20 pl-4"><?php echo $movie['duration']; ?> мин</span>
@@ -104,11 +107,18 @@ include 'src/templates/header.php'; ?>
                         <?php foreach ($cast as $actor): ?>
                         <div
                             class="group relative overflow-hidden rounded-2xl bg-surface-container aspect-square transition-all">
-                            <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
-                                alt="<?php echo $actor['name']; ?>" src="<?php echo $actor['image']; ?>" />
+                            <?php if (!empty($actor['image'])): ?>
+                                <img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-110"
+                                    alt="<?php echo htmlspecialchars($actor['name']); ?>" src="<?php echo htmlspecialchars($actor['image']); ?>" />
+                            <?php else: ?>
+                                <div class="w-full h-full flex flex-col items-center justify-center text-slate-500 group-hover:text-primary transition-colors" style="background: linear-gradient(135deg, var(--surface-container-lowest) 0%, var(--surface-container-highest) 100%);">
+                                    <span class="material-symbols-outlined" style="font-size: 56px; font-variation-settings: 'FILL' 1; opacity: 0.15;">person</span>
+                                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-top: 8px;">КИНО АКТЬОР</span>
+                                </div>
+                            <?php endif; ?>
                             <div class="actor-overlay">
-                                <p class="font-bold text-white"><?php echo $actor['name']; ?></p>
-                                <p class="text-xs text-slate-400"><?php echo $actor['character']; ?></p>
+                                <p class="font-bold text-white"><?php echo htmlspecialchars($actor['name']); ?></p>
+                                <p class="text-xs text-slate-400"><?php echo !empty($actor['character']) ? htmlspecialchars($actor['character']) : 'Актьор'; ?></p>
                             </div>
                         </div>
                         <?php endforeach; ?>

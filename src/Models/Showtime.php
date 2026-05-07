@@ -86,4 +86,85 @@ class Showtime {
         $stmt->execute(['reservation_id' => $reservation_id]);
         return $stmt->fetchAll();
     }
+
+    public function getAll() {
+        $stmt = $this->db->query("
+            SELECT s.*, m.title as movie_title, h.name as hall_name 
+            FROM showtimes s
+            JOIN movies m ON s.movie_id = m.id
+            JOIN halls h ON s.hall_id = h.id
+            ORDER BY s.start_time DESC
+        ");
+        return $stmt->fetchAll();
+    }
+
+    public function create($data) {
+        $stmt = $this->db->prepare("
+            INSERT INTO showtimes (movie_id, hall_id, start_time, base_price) 
+            VALUES (:movie_id, :hall_id, :start_time, :base_price)
+        ");
+        return $stmt->execute([
+            'movie_id' => $data['movie_id'],
+            'hall_id' => $data['hall_id'],
+            'start_time' => $data['start_time'],
+            'base_price' => $data['base_price']
+        ]);
+    }
+
+    public function update($id, $data) {
+        $stmt = $this->db->prepare("
+            UPDATE showtimes SET 
+                movie_id = :movie_id, 
+                hall_id = :hall_id, 
+                start_time = :start_time, 
+                base_price = :base_price 
+            WHERE id = :id
+        ");
+        return $stmt->execute([
+            'movie_id' => $data['movie_id'],
+            'hall_id' => $data['hall_id'],
+            'start_time' => $data['start_time'],
+            'base_price' => $data['base_price'],
+            'id' => $id
+        ]);
+    }
+
+    public function delete($id) {
+        $stmt = $this->db->prepare("DELETE FROM showtimes WHERE id = :id");
+        return $stmt->execute(['id' => $id]);
+    }
+
+    public function checkOverlap($hall_id, $start_time, $duration_minutes, $exclude_id = null) {
+        $newStart = new DateTime($start_time);
+        $newEnd = clone $newStart;
+        $newEnd->modify("+" . ($duration_minutes + 20) . " minutes"); // Duration + 20 mins cleaning
+
+        // Fetch all showtimes for that hall on the same day
+        $date = $newStart->format('Y-m-d');
+        $stmt = $this->db->prepare("
+            SELECT s.id, s.start_time, m.duration 
+            FROM showtimes s
+            JOIN movies m ON s.movie_id = m.id
+            WHERE s.hall_id = :hall_id AND DATE(s.start_time) = :date
+        ");
+        $stmt->execute(['hall_id' => $hall_id, 'date' => $date]);
+        $existingShowtimes = $stmt->fetchAll();
+
+        foreach ($existingShowtimes as $st) {
+            if ($exclude_id !== null && $st['id'] == $exclude_id) {
+                continue;
+            }
+
+            $exStart = new DateTime($st['start_time']);
+            $exEnd = clone $exStart;
+            $exEnd->modify("+" . ($st['duration'] + 20) . " minutes");
+
+            if ($newStart < $exEnd && $newEnd > $exStart) {
+                return true; // Overlap detected
+            }
+        }
+
+        return false;
+    }
 }
+

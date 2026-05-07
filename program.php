@@ -41,6 +41,7 @@ foreach ($showtimes as $st) {
             'duration' => $st['duration'],
             'genre' => $st['genre'],
             'rating' => $st['rating'],
+            'user_rating' => $st['user_rating'],
             'poster_path' => $st['poster_path'],
             'halls' => []
         ];
@@ -107,7 +108,7 @@ include 'src/templates/header.php'; ?>
                     </div>
                     <div class="meta-item">
                         <span class="material-symbols-outlined meta-icon text-gold">star</span>
-                        8.9
+                        <?php echo number_format($m['user_rating'] ?? 8.5, 1); ?>
                     </div>
                 </div>
 

@@ -116,4 +116,66 @@ class Booking {
             throw $e;
         }
     }
+
+    public function getAll() {
+        $stmt = $this->db->query("
+            SELECT r.*, s.start_time, m.title as movie_title, h.name as hall_name 
+            FROM reservations r
+            JOIN showtimes s ON r.showtime_id = s.id
+            JOIN movies m ON s.movie_id = m.id
+            JOIN halls h ON s.hall_id = h.id
+            ORDER BY r.created_at DESC
+        ");
+        return $stmt->fetchAll();
+    }
+
+    public function getById($id) {
+        $stmt = $this->db->prepare("
+            SELECT r.*, s.start_time, m.title as movie_title, h.name as hall_name 
+            FROM reservations r
+            JOIN showtimes s ON r.showtime_id = s.id
+            JOIN movies m ON s.movie_id = m.id
+            JOIN halls h ON s.hall_id = h.id
+            WHERE r.id = :id
+        ");
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch();
+    }
+
+    public function getSeatsForReservation($reservation_id) {
+        $stmt = $this->db->prepare("
+            SELECT rs.*, s.row_num, s.seat_num, s.type as seat_type 
+            FROM reserved_seats rs
+            JOIN seats s ON rs.seat_id = s.id
+            WHERE rs.reservation_id = :reservation_id
+        ");
+        $stmt->execute(['reservation_id' => $reservation_id]);
+        return $stmt->fetchAll();
+    }
+
+    public function updateReservation($id, $data) {
+        $stmt = $this->db->prepare("
+            UPDATE reservations SET 
+                customer_name = :customer_name, 
+                customer_email = :customer_email, 
+                payment_method = :payment_method, 
+                status = :status,
+                total_price = :total_price
+            WHERE id = :id
+        ");
+        return $stmt->execute([
+            'customer_name' => $data['customer_name'],
+            'customer_email' => $data['customer_email'],
+            'payment_method' => $data['payment_method'],
+            'status' => $data['status'],
+            'total_price' => $data['total_price'],
+            'id' => $id
+        ]);
+    }
+
+    public function delete($id) {
+        $stmt = $this->db->prepare("DELETE FROM reservations WHERE id = :id");
+        return $stmt->execute(['id' => $id]);
+    }
 }
+

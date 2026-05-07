@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS reserved_seats (
     uid VARCHAR(64) NOT NULL UNIQUE, -- Unique code for this specific ticket
     reservation_id INT NOT NULL,
     seat_id INT NOT NULL,
-    ticket_type ENUM('standard', 'student', 'senior') DEFAULT 'standard',
+    ticket_type ENUM('standard', 'student', 'senior', 'vip') DEFAULT 'standard',
     price DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE,
     FOREIGN KEY (seat_id) REFERENCES seats(id) ON DELETE CASCADE
@@ -103,3 +103,24 @@ CREATE TABLE IF NOT EXISTS newsletters (
     email VARCHAR(100) NOT NULL UNIQUE,
     subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Actors
+CREATE TABLE IF NOT EXISTS actors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    birth_date DATE DEFAULT NULL,
+    image_url VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Movie Actors link table
+CREATE TABLE IF NOT EXISTS movie_actors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    movie_id INT NOT NULL,
+    actor_id INT NOT NULL,
+    character_name VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
+    FOREIGN KEY (actor_id) REFERENCES actors(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_movie_actor (movie_id, actor_id)
+) ENGINE=InnoDB;
+

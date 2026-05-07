@@ -8,6 +8,8 @@ try {
 
     // Disable foreign key checks for truncation
     $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+    $db->exec("TRUNCATE TABLE movie_actors");
+    $db->exec("TRUNCATE TABLE actors");
     $db->exec("TRUNCATE TABLE reserved_seats");
     $db->exec("TRUNCATE TABLE reservations");
     $db->exec("TRUNCATE TABLE showtimes");
@@ -183,12 +185,46 @@ try {
     $movie_ids = [];
     $movie_stmt = $db->prepare("INSERT INTO movies (title, description, duration, genre, rating, release_date, director, cast, trailer_url, poster_path, status, user_rating) 
                                VALUES (:title, :description, :duration, :genre, :rating, :release_date, :director, :cast, :trailer_url, :poster_path, :status, :user_rating)");
+    
+    $actor_insert = $db->prepare("INSERT INTO actors (name, image_url) VALUES (:name, :image_url)");
+    $actor_select = $db->prepare("SELECT id FROM actors WHERE name = :name");
+    $link_insert = $db->prepare("INSERT INTO movie_actors (movie_id, actor_id, character_name) VALUES (:movie_id, :actor_id, :character_name)");
+
     foreach ($movies as $movie) {
+        $cast_json = $movie['cast'] ?? '[]';
+        $cast_array = json_decode($cast_json, true) ?: [];
+
         $movie['user_rating'] = rand(80, 99) / 10;
         $movie_stmt->execute($movie);
-        $movie_ids[] = $db->lastInsertId();
+        $movie_id = $db->lastInsertId();
+        $movie_ids[] = $movie_id;
+
+        foreach ($cast_array as $actor) {
+            $name = trim($actor['name'] ?? '');
+            if (empty($name)) continue;
+
+            $char = trim($actor['character'] ?? '');
+            $img = trim($actor['image'] ?? '');
+
+            $actor_select->execute(['name' => $name]);
+            $actor_id = $actor_select->fetchColumn();
+
+            if (!$actor_id) {
+                $actor_insert->execute([
+                    'name' => $name,
+                    'image_url' => !empty($img) ? $img : null
+                ]);
+                $actor_id = $db->lastInsertId();
+            }
+
+            $link_insert->execute([
+                'movie_id' => $movie_id,
+                'actor_id' => $actor_id,
+                'character_name' => !empty($char) ? $char : null
+            ]);
+        }
     }
-    echo "Movies inserted.\n";
+    echo "Movies, Actors and Relationships inserted.\n";
 
     // 4. Insert Showtimes for next 14 days
     $showtime_stmt = $db->prepare("INSERT INTO showtimes (movie_id, hall_id, start_time, base_price) VALUES (:movie_id, :hall_id, :start_time, :base_price)");

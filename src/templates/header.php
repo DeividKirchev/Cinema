@@ -24,10 +24,10 @@
             </div>
             
             <div class="nav-actions">
-                <div class="search-box">
+                <form action="archive.php" method="GET" class="search-box">
                     <span class="material-symbols-outlined search-icon">search</span>
-                    <input class="search-input" placeholder="Търсене на филм..." type="text"/>
-                </div>
+                    <input name="search" class="search-input" placeholder="Търсене на филм..." type="text" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"/>
+                </form>
                 <button class="burger-menu" id="burger-menu">
                     <span class="material-symbols-outlined">menu</span>
                 </button>

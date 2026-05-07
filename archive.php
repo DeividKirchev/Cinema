@@ -22,7 +22,33 @@ require_once __DIR__ . '/config/database.php';
 use App\Models\Movie;
 
 $movieModel = new Movie();
-$movies = $movieModel->getAll();
+
+// Filters & Pagination logic
+$filters = [];
+if (!empty($_GET['status'])) $filters['status'] = $_GET['status'];
+if (!empty($_GET['genre'])) $filters['genre'] = $_GET['genre'];
+if (!empty($_GET['search'])) $filters['search'] = $_GET['search'];
+
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 12; // movies per page
+$filters['limit'] = $limit;
+$filters['offset'] = ($page - 1) * $limit;
+
+$movies = $movieModel->getAll($filters);
+$totalMovies = $movieModel->getCount($filters);
+$totalPages = ceil($totalMovies / $limit);
+
+$activeStatus = $filters['status'] ?? '';
+$activeGenre = $filters['genre'] ?? '';
+$searchQuery = $filters['search'] ?? '';
+
+// Helper to build URL with current params
+function buildUrl($params) {
+    $current = $_GET;
+    $merged = array_merge($current, $params);
+    return '?' . http_build_query($merged);
+}
+
 
 include 'src/templates/header.php'; ?>
 
@@ -39,37 +65,40 @@ include 'src/templates/header.php'; ?>
     <!-- Filters Bar -->
     <div class="archive-filters">
         <div class="status-tabs desktop-only">
-            <button class="tab-btn active">Всички</button>
-            <button class="tab-btn">Минали</button>
-            <button class="tab-btn">Предстоящи</button>
-            <button class="tab-btn">Актуални</button>
+            <a href="archive.php<?php echo buildUrl(['status'=>'', 'page'=>1]); ?>" class="tab-btn <?php echo $activeStatus=='' ? 'active' : ''; ?>">Всички</a>
+            <a href="archive.php<?php echo buildUrl(['status'=>'past', 'page'=>1]); ?>" class="tab-btn <?php echo $activeStatus=='past' ? 'active' : ''; ?>">Минали</a>
+            <a href="archive.php<?php echo buildUrl(['status'=>'coming_soon', 'page'=>1]); ?>" class="tab-btn <?php echo $activeStatus=='coming_soon' ? 'active' : ''; ?>">Предстоящи</a>
+            <a href="archive.php<?php echo buildUrl(['status'=>'now_playing', 'page'=>1]); ?>" class="tab-btn <?php echo $activeStatus=='now_playing' ? 'active' : ''; ?>">Актуални</a>
         </div>
 
-        <div class="search-filter-group">
+        <form method="GET" action="archive.php" class="search-filter-group">
+            <?php if(!empty($activeStatus)): ?><input type="hidden" name="status" value="<?php echo htmlspecialchars($activeStatus); ?>"><?php endif; ?>
             <div class="select-wrapper mobile-only">
-                <select class="custom-select">
-                    <option>Всички филми</option>
-                    <option>Минали</option>
-                    <option>Предстоящи</option>
-                    <option>Актуални</option>
+                <select class="custom-select" name="status" onchange="this.form.submit()">
+                    <option value="" <?php echo $activeStatus==''?'selected':''; ?>>Всички филми</option>
+                    <option value="past" <?php echo $activeStatus=='past'?'selected':''; ?>>Минали</option>
+                    <option value="coming_soon" <?php echo $activeStatus=='coming_soon'?'selected':''; ?>>Предстоящи</option>
+                    <option value="now_playing" <?php echo $activeStatus=='now_playing'?'selected':''; ?>>Актуални</option>
                 </select>
                 <span class="material-symbols-outlined select-icon">expand_more</span>
             </div>
             <div class="search-wrapper">
                 <span class="material-symbols-outlined">search</span>
-                <input type="text" placeholder="Търси филм...">
+                <input type="text" name="search" placeholder="Търси филм..." value="<?php echo htmlspecialchars($searchQuery); ?>">
             </div>
             <div class="select-wrapper">
-                <select class="custom-select">
-                    <option>Всички жанрове</option>
-                    <option>Екшън</option>
-                    <option>Драма</option>
-                    <option>Комедия</option>
-                    <option>Sci-Fi</option>
+                <select class="custom-select" name="genre" onchange="this.form.submit()">
+                    <option value="">Всички жанрове</option>
+                    <option value="Екшън" <?php echo $activeGenre=='Екшън'?'selected':''; ?>>Екшън</option>
+                    <option value="Драма" <?php echo $activeGenre=='Драма'?'selected':''; ?>>Драма</option>
+                    <option value="Комедия" <?php echo $activeGenre=='Комедия'?'selected':''; ?>>Комедия</option>
+                    <option value="Sci-Fi" <?php echo $activeGenre=='Sci-Fi'?'selected':''; ?>>Sci-Fi</option>
+                    <option value="Ужаси" <?php echo $activeGenre=='Ужаси'?'selected':''; ?>>Ужаси</option>
+                    <option value="Анимация" <?php echo $activeGenre=='Анимация'?'selected':''; ?>>Анимация</option>
                 </select>
                 <span class="material-symbols-outlined select-icon">expand_more</span>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- Movie Grid -->
@@ -84,7 +113,7 @@ include 'src/templates/header.php'; ?>
                     <h3 class="movie-card-title"><?php echo $movie['title']; ?></h3>
                     <div class="movie-card-rating">
                         <span class="material-symbols-outlined icon-fill">star</span>
-                        8.9
+                        <?php echo number_format($movie['user_rating'] ?? 8.5, 1); ?>
                     </div>
                 </div>
                 <p class="text-muted text-xs uppercase tracking-widest">
@@ -96,13 +125,15 @@ include 'src/templates/header.php'; ?>
     </div>
 
     <!-- Pagination -->
+    <?php if ($totalPages > 1): ?>
     <div class="pagination">
-        <a href="#" class="page-link active">1</a>
-        <a href="#" class="page-link">2</a>
-        <a href="#" class="page-link">3</a>
-        <span class="text-muted mx-2">...</span>
-        <a href="#" class="page-link">12</a>
+        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <a href="archive.php<?php echo buildUrl(['page' => $i]); ?>" class="page-link <?php echo $i == $page ? 'active' : ''; ?>">
+                <?php echo $i; ?>
+            </a>
+        <?php endfor; ?>
     </div>
+    <?php endif; ?>
 </main>
 
 <?php include 'src/templates/footer.php'; ?>

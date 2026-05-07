@@ -136,4 +136,58 @@ class Movie {
         $stmt = $this->db->prepare("DELETE FROM movies WHERE id = :id");
         return $stmt->execute(['id' => $id]);
     }
+
+    public function getActors($movieId) {
+        $stmt = $this->db->prepare("
+            SELECT a.*, ma.character_name as `character` 
+            FROM movie_actors ma
+            JOIN actors a ON ma.actor_id = a.id
+            WHERE ma.movie_id = :movie_id
+            ORDER BY a.name ASC
+        ");
+        $stmt->execute(['movie_id' => $movieId]);
+        return $stmt->fetchAll();
+    }
+
+    public function getActorLinks($movieId) {
+        $stmt = $this->db->prepare("
+            SELECT actor_id, character_name 
+            FROM movie_actors 
+            WHERE movie_id = :movie_id
+        ");
+        $stmt->execute(['movie_id' => $movieId]);
+        $rows = $stmt->fetchAll();
+        $links = [];
+        foreach ($rows as $row) {
+            $links[$row['actor_id']] = $row['character_name'];
+        }
+        return $links;
+    }
+
+    public function syncActors($movieId, $actorsData) {
+        // Delete existing links
+        $stmt = $this->db->prepare("DELETE FROM movie_actors WHERE movie_id = :movie_id");
+        $stmt->execute(['movie_id' => $movieId]);
+
+        if (empty($actorsData) || !is_array($actorsData)) {
+            return;
+        }
+
+        // Insert new links
+        $stmt = $this->db->prepare("
+            INSERT INTO movie_actors (movie_id, actor_id, character_name) 
+            VALUES (:movie_id, :actor_id, :character_name)
+        ");
+        foreach ($actorsData as $act) {
+            if (!isset($act['id'])) {
+                continue;
+            }
+            $stmt->execute([
+                'movie_id' => $movieId,
+                'actor_id' => (int)$act['id'],
+                'character_name' => !empty($act['character']) ? trim($act['character']) : null
+            ]);
+        }
+    }
 }
+
