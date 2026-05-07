@@ -155,6 +155,17 @@ include 'src/templates/header.php'; ?>
                         <button class="qty-btn plus"><span class="material-symbols-outlined">add</span></button>
                     </div>
                 </div>
+                <div class="ticket-type" data-type="vip" data-price="30">
+                    <div class="flex-1">
+                        <p class="text-xs font-black text-gold">VIP БИЛЕТ</p>
+                        <p class="text-xs text-muted">30.00 ЛВ.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="qty-btn minus"><span class="material-symbols-outlined">remove</span></button>
+                        <span class="qty-val">0</span>
+                        <button class="qty-btn plus"><span class="material-symbols-outlined">add</span></button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -189,9 +200,7 @@ include 'src/templates/header.php'; ?>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        let totalTickets = 0;
         let selectedSeats = [];
-        let totalPrice = 0;
 
         const qtyBtns = document.querySelectorAll('.qty-btn');
         const seats = document.querySelectorAll('.seat:not(.occupied)');
@@ -205,56 +214,116 @@ include 'src/templates/header.php'; ?>
                 const typeRow = btn.closest('.ticket-type');
                 const valEl = typeRow.querySelector('.qty-val');
                 let val = parseInt(valEl.textContent);
-                const price = parseInt(typeRow.dataset.price);
 
                 if (btn.classList.contains('plus')) {
                     val++;
-                    totalTickets++;
-                    totalPrice += price;
                 } else if (val > 0) {
                     val--;
-                    totalTickets--;
-                    totalPrice -= price;
-                    if (selectedSeats.length > totalTickets) {
-                        const last = selectedSeats.pop();
-                        const lastSeatEl = document.querySelector(`.seat[data-row="${last.row}"][data-seat="${last.seat}"]`);
-                        lastSeatEl.classList.remove('selected');
-                    }
                 }
 
                 valEl.textContent = val;
+                
+                adjustSelectedSeatsToTickets();
                 updateUI();
             });
         });
 
         seats.forEach(seat => {
             seat.addEventListener('click', () => {
-                if (totalTickets === 0) {
-                    alert('Моля, първо изберете брой билети!');
-                    return;
-                }
-
                 const row = seat.dataset.row;
                 const num = seat.dataset.seat;
                 const id = seat.dataset.id;
-                const type = seat.dataset.type;
+                const seatType = seat.dataset.type; // 'vip' or 'standard'
+
+                const stdQty = parseInt(document.querySelector('.ticket-type[data-type="standard"] .qty-val').textContent);
+                const discQty = parseInt(document.querySelector('.ticket-type[data-type="discount"] .qty-val').textContent);
+                const vipQty = parseInt(document.querySelector('.ticket-type[data-type="vip"] .qty-val').textContent);
+
+                const vipSeats = selectedSeats.filter(s => s.seatType === 'vip');
+                const stdSeats = selectedSeats.filter(s => s.seatType === 'standard');
 
                 if (seat.classList.contains('selected')) {
                     seat.classList.remove('selected');
                     selectedSeats = selectedSeats.filter(s => s.id !== id);
                 } else {
-                    if (selectedSeats.length < totalTickets) {
-                        seat.classList.add('selected');
-                        selectedSeats.push({ id, row, seat: num, type });
+                    if (seatType === 'vip') {
+                        if (vipQty === 0) {
+                            alert('Моля, първо изберете VIP билет от страничната лента!');
+                            return;
+                        }
+                        if (vipSeats.length < vipQty) {
+                            seat.classList.add('selected');
+                            selectedSeats.push({ id, row, seat: num, seatType });
+                        } else {
+                            alert(`Можете да изберете максимум ${vipQty} VIP места.`);
+                        }
                     } else {
-                        alert(`Можете да изберете максимум ${totalTickets} места.`);
+                        if ((stdQty + discQty) === 0) {
+                            alert('Моля, първо изберете стандартен или намален билет от страничната лента!');
+                            return;
+                        }
+                        if (stdSeats.length < (stdQty + discQty)) {
+                            seat.classList.add('selected');
+                            selectedSeats.push({ id, row, seat: num, seatType });
+                        } else {
+                            alert(`Можете да изберете максимум ${stdQty + discQty} стандартни/намалени места.`);
+                        }
                     }
                 }
                 updateUI();
             });
         });
 
+        function adjustSelectedSeatsToTickets() {
+            const stdQty = parseInt(document.querySelector('.ticket-type[data-type="standard"] .qty-val').textContent);
+            const discQty = parseInt(document.querySelector('.ticket-type[data-type="discount"] .qty-val').textContent);
+            const vipQty = parseInt(document.querySelector('.ticket-type[data-type="vip"] .qty-val').textContent);
+
+            let vipSeats = selectedSeats.filter(s => s.seatType === 'vip');
+            let stdSeats = selectedSeats.filter(s => s.seatType === 'standard');
+
+            while (vipSeats.length > vipQty) {
+                const removed = vipSeats.pop();
+                selectedSeats = selectedSeats.filter(s => s.id !== removed.id);
+                const seatEl = document.querySelector(`.seat[data-id="${removed.id}"]`);
+                if (seatEl) seatEl.classList.remove('selected');
+            }
+
+            while (stdSeats.length > (stdQty + discQty)) {
+                const removed = stdSeats.pop();
+                selectedSeats = selectedSeats.filter(s => s.id !== removed.id);
+                const seatEl = document.querySelector(`.seat[data-id="${removed.id}"]`);
+                if (seatEl) seatEl.classList.remove('selected');
+            }
+        }
+
         function updateUI() {
+            const stdQty = parseInt(document.querySelector('.ticket-type[data-type="standard"] .qty-val').textContent);
+            const discQty = parseInt(document.querySelector('.ticket-type[data-type="discount"] .qty-val').textContent);
+            const vipQty = parseInt(document.querySelector('.ticket-type[data-type="vip"] .qty-val').textContent);
+
+            const totalTickets = stdQty + discQty + vipQty;
+            const totalPrice = (stdQty * 15) + (discQty * 12) + (vipQty * 30);
+
+            // Assign ticket types to selected seats proportionally
+            let vipSeats = selectedSeats.filter(s => s.seatType === 'vip');
+            let stdSeats = selectedSeats.filter(s => s.seatType === 'standard');
+
+            vipSeats.forEach(s => {
+                s.type = 'vip';
+                s.price = 30.00;
+            });
+
+            stdSeats.forEach((s, idx) => {
+                if (idx < stdQty) {
+                    s.type = 'standard';
+                    s.price = 15.00;
+                } else {
+                    s.type = 'student';
+                    s.price = 12.00;
+                }
+            });
+
             countStatus.textContent = `${selectedSeats.length} / ${totalTickets}`;
             totalPriceEl.textContent = totalPrice.toFixed(2);
 
@@ -262,11 +331,11 @@ include 'src/templates/header.php'; ?>
             selectedSeats.forEach(s => {
                 const item = document.createElement('div');
                 item.className = 'selected-seat-item';
-                item.innerHTML = `<p class="selected-seat-text">РЕД ${s.row}, МЯСТО ${s.seat}</p>`;
+                let labelType = s.seatType === 'vip' ? 'VIP' : (s.type === 'student' ? 'НАМАЛЕН' : 'СТАНДАРТЕН');
+                item.innerHTML = `<p class="selected-seat-text">РЕД ${s.row}, МЯСТО ${s.seat} <span class="text-xs text-muted">(${labelType})</span></p>`;
                 list.appendChild(item);
             });
 
-            // Update hidden inputs for form submission
             document.getElementById('input-selected-seats').value = JSON.stringify(selectedSeats);
             document.getElementById('input-total-price').value = totalPrice.toFixed(2);
 
@@ -277,7 +346,6 @@ include 'src/templates/header.php'; ?>
             }
         }
 
-        // Center seat map on load (mobile only)
         const centerSeatMap = () => {
             const wrapper = document.getElementById('seat-map-wrapper');
             if (wrapper && wrapper.scrollWidth > wrapper.clientWidth) {

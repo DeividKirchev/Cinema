@@ -1137,7 +1137,7 @@ h4,
     display: flex;
     justify-content: space-between;
     pointer-events: none;
-    padding: 0 40px;
+    padding: 0 20px;
     z-index: 10;
 }
 
@@ -2305,7 +2305,7 @@ h4,
     transform: translate(-50%, -50%);
     width: 100%;
     pointer-events: none;
-    padding: 0 40px;
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
     z-index: 10;

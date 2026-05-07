@@ -24,6 +24,23 @@ use App\Models\Showtime;
 
 $movieModel = new Movie();
 $showtimeModel = new Showtime();
+$db = Database::getInstance();
+
+$newsletterMsg = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) {
+    $email = filter_var($_POST['newsletter_email'], FILTER_SANITIZE_EMAIL);
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        try {
+            $stmt = $db->prepare("INSERT IGNORE INTO newsletters (email) VALUES (:email)");
+            $stmt->execute(['email' => $email]);
+            $newsletterMsg = 'Успешно се абонирахте за нашия бюлетин!';
+        } catch (Exception $e) {
+            $newsletterMsg = 'Възникна грешка при абонамента.';
+        }
+    } else {
+        $newsletterMsg = 'Моля, въведете валиден имейл адрес.';
+    }
+}
 
 // Fetch featured movie
 $featuredMovie = $movieModel->getFeatured();
@@ -231,9 +248,12 @@ include 'src/templates/header.php'; ?>
                     <p>
                         Абонирайте се за нашия бюлетин и получавайте първи новини за най-новите филми и ексклузивни оферти.
                     </p>
-                    <form class="newsletter-form">
-                        <input type="email" placeholder="Вашият имейл..." class="newsletter-input">
-                        <button class="btn btn-primary px-12 rounded-xl font-black tracking-widest">АБОНИРАЙ СЕ</button>
+                    <?php if ($newsletterMsg): ?>
+                        <p style="color: #4ade80; font-weight: bold; margin-bottom: 10px;"><?php echo $newsletterMsg; ?></p>
+                    <?php endif; ?>
+                    <form class="newsletter-form" method="POST" action="index.php">
+                        <input type="email" name="newsletter_email" placeholder="Вашият имейл..." class="newsletter-input" required>
+                        <button type="submit" class="btn btn-primary px-12 rounded-xl font-black tracking-widest">АБОНИРАЙ СЕ</button>
                     </form>
                 </div>
             </div>
