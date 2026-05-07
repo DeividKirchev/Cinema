@@ -15,6 +15,7 @@ try {
     $db->exec("TRUNCATE TABLE halls");
     $db->exec("TRUNCATE TABLE movies");
     $db->exec("TRUNCATE TABLE users");
+    $db->exec("TRUNCATE TABLE promo_codes");
     $db->exec("SET FOREIGN_KEY_CHECKS = 1");
 
     echo "Tables truncated successfully.\n";
@@ -24,6 +25,10 @@ try {
     $db->prepare("INSERT INTO users (username, password, role) VALUES ('admin', :password, 'admin')")
        ->execute(['password' => $adminPassword]);
     echo "Admin user created (admin / admin123).\n";
+
+    // 0.5. Insert Promo Code
+    $db->exec("INSERT INTO promo_codes (code, discount_percent, valid_until) VALUES ('PROMOCODE', 50, '2030-12-31')");
+    echo "Promo code inserted.\n";
 
     // 1. Insert Halls
     $halls = [
@@ -69,7 +74,11 @@ try {
             'rating' => '16+',
             'release_date' => '2024-11-15',
             'director' => 'Ридли Скот',
-            'cast' => json_encode([['name' => 'Пол Мескал', 'character' => 'Луций', 'image' => 'https://image.tmdb.org/t/p/w500/tw8XU3rGfF3Tf3Tf3Tf3Tf3T.jpg']]),
+            'cast' => json_encode([
+                ['name' => 'Пол Мескал', 'character' => 'Луций', 'image' => 'https://image.tmdb.org/t/p/w500/vrzZ41TGNAFgfmZjC2sOJySzBLd.jpg'],
+                ['name' => 'Педро Паскал', 'character' => 'Марк Акаций', 'image' => 'https://image.tmdb.org/t/p/w500/9VYK7oxcqhjd5LAH6ZFJ3XzOlID.jpg'],
+                ['name' => 'Дензъл Уошингтън', 'character' => 'Макрин', 'image' => 'https://image.tmdb.org/t/p/w500/jj2Gcobpopokal0YstuCQW0ldJ4.jpg']
+            ]),
             'trailer_url' => 'https://www.youtube.com/embed/4rgYUipGJNo',
             'poster_path' => 'public/assets/images/img_15.jpg',
             'status' => 'now playing'
@@ -82,7 +91,11 @@ try {
             'rating' => '12+',
             'release_date' => '2024-03-01',
             'director' => 'Дени Вилньов',
-            'cast' => json_encode([]),
+            'cast' => json_encode([
+                ['name' => 'Тимъти Шаламе', 'character' => 'Пол Атреидски', 'image' => 'https://image.tmdb.org/t/p/w500/dFxpwRpmzpVfP1zjluH68DeQhyj.jpg'],
+                ['name' => 'Зендая', 'character' => 'Чани', 'image' => 'https://image.tmdb.org/t/p/w500/uD5a0CsVbR0phlUvHXLlKntAIXS.jpg'],
+                ['name' => 'Остин Бътлър', 'character' => 'Фейд-Рота', 'image' => 'https://image.tmdb.org/t/p/w500/atdAs4pFGjUQ4m2W8kJYly7N6cC.jpg']
+            ]),
             'trailer_url' => 'https://www.youtube.com/embed/Way9Dexny3w',
             'poster_path' => 'public/assets/images/img_16.jpg',
             'status' => 'now playing'
@@ -95,7 +108,10 @@ try {
             'rating' => 'B',
             'release_date' => '2024-09-27',
             'director' => 'Крис Сандърс',
-            'cast' => json_encode([]),
+            'cast' => json_encode([
+                ['name' => 'Лупита Нионго', 'character' => 'Роз (глас)', 'image' => 'https://image.tmdb.org/t/p/w500/y40Wu1T742kynOqtwXASc5Qgm49.jpg'],
+                ['name' => 'Педро Паскал', 'character' => 'Финк (глас)', 'image' => 'https://image.tmdb.org/t/p/w500/9VYK7oxcqhjd5LAH6ZFJ3XzOlID.jpg']
+            ]),
             'trailer_url' => 'https://www.youtube.com/embed/67vbA5ZJdK8',
             'poster_path' => 'public/assets/images/img_17.jpg',
             'status' => 'now playing'
@@ -108,7 +124,9 @@ try {
             'rating' => '18+',
             'release_date' => '2024-10-18',
             'director' => 'Паркър Фин',
-            'cast' => json_encode([]),
+            'cast' => json_encode([
+                ['name' => 'Наоми Скот', 'character' => 'Скай Райли', 'image' => 'https://image.tmdb.org/t/p/w500/knSGMaEaH6CZaYw7GQpvxyJcsz7.jpg']
+            ]),
             'trailer_url' => 'https://www.youtube.com/embed/0hSJN8m_ZpM',
             'poster_path' => 'public/assets/images/img_18.jpg',
             'status' => 'now playing'
@@ -121,7 +139,10 @@ try {
             'rating' => '16+',
             'release_date' => '2024-10-04',
             'director' => 'Тод Филипс',
-            'cast' => json_encode([]),
+            'cast' => json_encode([
+                ['name' => 'Хоакин Финикс', 'character' => 'Артър Флек', 'image' => 'https://image.tmdb.org/t/p/w500/u38k3hQBDwNX0VA22aQceDp9Iyv.jpg'],
+                ['name' => 'Лейди Гага', 'character' => 'Лий Куинзел', 'image' => 'https://image.tmdb.org/t/p/w500/9Y4Pz7AEXhB9qNar2tMsx5EVXML.jpg']
+            ]),
             'trailer_url' => 'https://www.youtube.com/embed/_OKAwz2MsJs',
             'poster_path' => 'public/assets/images/img_19.jpg',
             'status' => 'now playing'
@@ -134,7 +155,10 @@ try {
             'rating' => '16+',
             'release_date' => '2024-07-26',
             'director' => 'Шон Леви',
-            'cast' => json_encode([]),
+            'cast' => json_encode([
+                ['name' => 'Райън Рейнолдс', 'character' => 'Уейд Уилсън', 'image' => 'https://image.tmdb.org/t/p/w500/trzgptffGvAlAT6MEu01fz47cLW.jpg'],
+                ['name' => 'Хю Джакман', 'character' => 'Лоуган', 'image' => 'https://image.tmdb.org/t/p/w500/oX6CpXmnXCHLyqsa4NEed1DZAKx.jpg']
+            ]),
             'trailer_url' => 'https://www.youtube.com/embed/73_1biulk6g',
             'poster_path' => 'public/assets/images/img_20.jpg',
             'status' => 'now playing'
@@ -147,7 +171,9 @@ try {
             'rating' => 'B',
             'release_date' => '2024-12-20',
             'director' => 'Бари Дженкинс',
-            'cast' => json_encode([]),
+            'cast' => json_encode([
+                ['name' => 'Арън Пиер', 'character' => 'Муфаса (глас)', 'image' => 'https://image.tmdb.org/t/p/w500/z2cMMZyWzv5ztT6pFdAAjB3u7CQ.jpg']
+            ]),
             'trailer_url' => '',
             'poster_path' => 'public/assets/images/img_21.jpg',
             'status' => 'now playing'
@@ -155,9 +181,10 @@ try {
     ];
 
     $movie_ids = [];
-    $movie_stmt = $db->prepare("INSERT INTO movies (title, description, duration, genre, rating, release_date, director, cast, trailer_url, poster_path, status) 
-                               VALUES (:title, :description, :duration, :genre, :rating, :release_date, :director, :cast, :trailer_url, :poster_path, :status)");
+    $movie_stmt = $db->prepare("INSERT INTO movies (title, description, duration, genre, rating, release_date, director, cast, trailer_url, poster_path, status, user_rating) 
+                               VALUES (:title, :description, :duration, :genre, :rating, :release_date, :director, :cast, :trailer_url, :poster_path, :status, :user_rating)");
     foreach ($movies as $movie) {
+        $movie['user_rating'] = rand(80, 99) / 10;
         $movie_stmt->execute($movie);
         $movie_ids[] = $db->lastInsertId();
     }

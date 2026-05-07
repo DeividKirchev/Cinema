@@ -18,18 +18,73 @@ class Movie {
         $params = [];
 
         if (!empty($filters['genre'])) {
-            $sql .= " AND genre = :genre";
-            $params['genre'] = $filters['genre'];
+            $sql .= " AND genre LIKE :genre";
+            $params['genre'] = '%' . $filters['genre'] . '%';
         }
 
         if (!empty($filters['status'])) {
-            $sql .= " AND status = :status";
-            $params['status'] = $filters['status'];
+            if ($filters['status'] == 'archived') {
+                $sql .= " AND status = 'archived'";
+            } else if ($filters['status'] == 'past') {
+                $sql .= " AND status = 'archived'";
+            } else if ($filters['status'] == 'coming_soon') {
+                $sql .= " AND status = 'coming soon'";
+            } else if ($filters['status'] == 'now_playing') {
+                $sql .= " AND status = 'now playing'";
+            }
+        } else {
+             $sql .= " AND status != 'archived'"; // Default
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND title LIKE :search";
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
+        $sql .= " ORDER BY id DESC";
+
+        if (isset($filters['limit'])) {
+            $limit = (int)$filters['limit'];
+            $offset = isset($filters['offset']) ? (int)$filters['offset'] : 0;
+            $sql .= " LIMIT $limit OFFSET $offset";
         }
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    public function getCount($filters = []) {
+        $sql = "SELECT COUNT(*) FROM movies WHERE 1=1";
+        $params = [];
+
+        if (!empty($filters['genre'])) {
+            $sql .= " AND genre LIKE :genre";
+            $params['genre'] = '%' . $filters['genre'] . '%';
+        }
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] == 'archived') {
+                $sql .= " AND status = 'archived'";
+            } else if ($filters['status'] == 'past') {
+                $sql .= " AND status = 'archived'";
+            } else if ($filters['status'] == 'coming_soon') {
+                $sql .= " AND status = 'coming soon'";
+            } else if ($filters['status'] == 'now_playing') {
+                $sql .= " AND status = 'now playing'";
+            }
+        } else {
+             $sql .= " AND status != 'archived'"; // Default
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND title LIKE :search";
+            $params['search'] = '%' . $filters['search'] . '%';
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn();
     }
 
     public function getById($id) {
@@ -39,8 +94,8 @@ class Movie {
     }
 
     public function create($data) {
-        $sql = "INSERT INTO movies (title, description, duration, genre, rating, release_date, director, cast, trailer_url, poster_path, status) 
-                VALUES (:title, :description, :duration, :genre, :rating, :release_date, :director, :cast, :trailer_url, :poster_path, :status)";
+        $sql = "INSERT INTO movies (title, description, duration, genre, rating, release_date, director, cast, trailer_url, poster_path, status, user_rating) 
+                VALUES (:title, :description, :duration, :genre, :rating, :release_date, :director, :cast, :trailer_url, :poster_path, :status, :user_rating)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($data);
         return $this->db->lastInsertId();
@@ -51,14 +106,15 @@ class Movie {
         $sql = "UPDATE movies SET 
                 title = :title, description = :description, duration = :duration, genre = :genre, 
                 rating = :rating, release_date = :release_date, director = :director, 
-                cast = :cast, trailer_url = :trailer_url, poster_path = :poster_path, status = :status 
+                cast = :cast, trailer_url = :trailer_url, poster_path = :poster_path, status = :status, user_rating = :user_rating 
                 WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($data);
     }
 
     public function getFeatured() {
-        $stmt = $this->db->prepare("SELECT * FROM movies WHERE status = 'now playing' ORDER BY release_date DESC LIMIT 1");
+        // $stmt = $this->db->prepare("SELECT * FROM movies WHERE status = 'now playing' ORDER BY release_date DESC LIMIT 1");
+        $stmt = $this->db->prepare("SELECT * FROM movies WHERE title like '%Гладиатор%' LIMIT 1");
         $stmt->execute();
         return $stmt->fetch();
     }

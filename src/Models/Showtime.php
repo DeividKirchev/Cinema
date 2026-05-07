@@ -29,7 +29,7 @@ class Showtime {
 
     public function getByDate($date) {
         $stmt = $this->db->prepare("
-            SELECT s.*, m.title, m.duration, m.genre, m.rating, m.poster_path, h.name as hall_name 
+            SELECT s.*, m.title, m.duration, m.genre, m.rating, m.user_rating, m.poster_path, h.name as hall_name 
             FROM showtimes s
             JOIN movies m ON s.movie_id = m.id
             JOIN halls h ON s.hall_id = h.id
@@ -42,7 +42,7 @@ class Showtime {
 
     public function getById($id) {
         $stmt = $this->db->prepare("
-            SELECT s.*, m.title, m.poster_path, h.name as hall_name, h.capacity
+            SELECT s.*, m.title, m.poster_path, m.user_rating, h.name as hall_name, h.capacity
             FROM showtimes s
             JOIN movies m ON s.movie_id = m.id
             JOIN halls h ON s.hall_id = h.id

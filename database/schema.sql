@@ -27,6 +27,7 @@ CREATE TABLE movies (
     cast TEXT, -- JSON string or comma-separated list
     trailer_url VARCHAR(255),
     poster_path VARCHAR(255),
+    user_rating DECIMAL(3,1) DEFAULT 8.5,
     status ENUM('now playing', 'coming soon', 'archived') DEFAULT 'now playing',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
