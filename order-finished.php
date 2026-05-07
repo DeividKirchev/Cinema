@@ -146,23 +146,33 @@ include 'src/templates/header.php'; ?>
 
 <style>
     @media print {
-        .no-print { display: none !important; }
-        .print-only { display: block !important; }
-        body { background: white !important; color: black !important; }
-        .navbar, .header, .footer { display: none !important; }
+        /* Hide everything by default */
+        body > * { display: none !important; }
         
+        /* Show only the main container and the print-only section */
+        main { display: block !important; padding: 0 !important; margin: 0 !important; }
+        main > * { display: none !important; }
+        .print-only, .print-only * { display: block !important; }
+        
+        body, main { 
+            background: white !important; 
+            color: black !important;
+        }
+
         .print-ticket {
-            break-before: page;
-            padding: 60px;
-            border: 1px solid #eee;
-            margin-bottom: 20px;
-            color: #000;
-            background: #fff;
-            min-height: 100vh;
+            break-before: page !important;
+            padding: 40px !important;
+            border-bottom: 1px dashed #ccc !important;
+            color: #000 !important;
+            background: #fff !important;
+            min-height: 100vh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
         }
 
         .print-ticket:first-child {
-            break-before: auto;
+            break-before: avoid !important;
         }
     }
     .print-only { display: none; }
